@@ -1,0 +1,429 @@
+﻿/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE.CSS — Mobile-first breakpoints
+   Base (mobile) styles live in style.css and components.css.
+   Breakpoints:
+     xs  < 22.5em  (< 360px)   extra-small phones
+     sm  ≥ 36em    (≥ 576px)   large phones / small tablets
+     md  ≥ 48em    (≥ 768px)   tablets
+     lg  ≥ 75em    (≥ 1200px)  desktops
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Global mobile defaults ──────────────────────────────────── */
+
+/* Named grid helpers default to single column on mobile */
+.grid--stats,
+.grid--cards,
+.grid--forms {
+  grid-template-columns: 1fr;
+}
+
+/* Library grid: 1 column on mobile */
+.library-grid {
+  grid-template-columns: 1fr;
+}
+
+.page-main {
+  padding-bottom: var(--space-8);
+}
+
+body.menu-open {
+  overflow: hidden;
+}
+
+/* ── Safe area insets (notched / dynamic-island devices) ─────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .dashboard-bottom-nav,
+  .library-bottom-nav,
+  .review-bottom-nav {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  .dashboard-app,
+  .library-app,
+  .review-app,
+  .session-app {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  .session-launch {
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+
+  .onboarding-actions {
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+}
+
+/* ── XS: Extra-small phones (< 360px) ───────────────────────── */
+@media (max-width: 22.49em) {
+  .auth-content {
+    padding: var(--space-4);
+  }
+
+  .auth-socials {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-mood__face,
+  .dashboard-mood-btn__face {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 0.75rem;
+  }
+
+  .onboarding-mood__label,
+  .dashboard-mood-btn__label {
+    font-size: 0.6rem;
+  }
+
+  .landing-hero {
+    min-height: 20rem;
+    padding: var(--space-4);
+  }
+
+  .landing-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .session-preview__media {
+    min-height: 14rem;
+  }
+
+  .session-duration-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .review-badge {
+    width: 5.5rem;
+    height: 5.5rem;
+    font-size: 1.6rem;
+  }
+
+  /* Stat cards — tighter on mobile so labels don't clip */
+  .dashboard-stat {
+    padding: var(--space-3);
+    overflow: hidden;
+  }
+
+  .dashboard-stat__label {
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dashboard-stat__value strong {
+    font-size: 1.3rem;
+  }
+
+  .dashboard-stat__delta {
+    font-size: 0.7rem;
+  }
+}
+
+/* ── Landscape phones ────────────────────────────────────────── */
+@media (max-height: 500px) and (orientation: landscape) {
+  .landing-hero {
+    min-height: 18rem;
+  }
+
+  .session-preview__media {
+    min-height: 12rem;
+  }
+
+  .auth-wrap {
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .auth-branding {
+    padding-bottom: var(--space-4);
+  }
+
+  .onboarding-head {
+    padding-top: var(--space-3);
+  }
+
+  .review-badge {
+    width: 5rem;
+    height: 5rem;
+    font-size: 1.5rem;
+  }
+}
+
+/* ── SM: Large phones and up (≥ 576px / 36em) ───────────────── */
+@media (min-width: 36em) {
+
+  /* Auth card gets rounded corners when not full-bleed */
+  .auth-card {
+    border-radius: var(--radius-xl);
+  }
+
+  /* Landing */
+  .landing-hero__actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-mini-footer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Stats grid goes 2-column earlier */
+  .grid--stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Library grid: 2 columns at sm */
+  .library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Auth */
+  .auth-wrap {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  /* Onboarding */
+  .onboarding-shell {
+    padding: var(--space-4);
+  }
+
+  .onboarding-app {
+    min-height: calc(100dvh - 2rem);
+  }
+
+  .onboarding-card {
+    padding: var(--space-6);
+  }
+
+  /* Dashboard */
+  .dashboard-shell {
+    padding: var(--space-4);
+  }
+
+  .dashboard-app {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(29, 159, 118, 0.1);
+    background: rgba(250, 252, 251, 0.96);
+    min-height: calc(100dvh - var(--navbar-height) - 2rem);
+  }
+
+  .dashboard-bottom-nav {
+    bottom: var(--space-4);
+    border-radius: var(--radius-xl);
+  }
+
+  /* Library */
+  .library-shell {
+    padding: var(--space-4);
+  }
+
+  .library-app {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(29, 159, 118, 0.1);
+    background: rgba(250, 252, 251, 0.96);
+    min-height: calc(100dvh - var(--navbar-height) - 2rem);
+  }
+
+  .library-bottom-nav {
+    bottom: var(--space-4);
+    border-radius: var(--radius-xl);
+  }
+
+  /* Session */
+  .session-shell {
+    padding: var(--space-4);
+  }
+
+  .session-app {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(29, 159, 118, 0.1);
+    background: rgba(250, 252, 251, 0.96);
+    min-height: calc(100dvh - var(--navbar-height) - 2rem);
+  }
+
+  /* Review */
+  .review-shell {
+    padding: var(--space-4);
+  }
+
+  .review-app {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(29, 159, 118, 0.1);
+    background: rgba(250, 252, 251, 0.96);
+    min-height: calc(100dvh - var(--navbar-height) - 2rem);
+  }
+
+  .review-bottom-nav {
+    bottom: var(--space-4);
+    border-radius: var(--radius-xl);
+  }
+}
+
+/* ── MD: Tablets and up (≥ 768px / 48em) ────────────────────── */
+@media (min-width: 48em) {
+
+  /* Auth: show left panel, hide mobile branding */
+  .auth-panel {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .auth-mobile-brand {
+    display: none;
+  }
+
+  .auth-wrap {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  /* Container */
+  .container {
+    width: min(100% - 3rem, var(--container-md));
+  }
+
+  /* Navigation */
+  .site-nav-right {
+    display: flex;
+  }
+
+  .nav-toggle,
+  .mobile-nav {
+    display: none !important;
+  }
+
+  /* Footer */
+  .site-footer__row {
+    text-align: left;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  /* Grid helpers */
+  .grid--forms {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Landing */
+  .landing-main {
+    gap: var(--space-8);
+  }
+
+  .landing-hero-wrap {
+    padding-top: var(--space-4);
+  }
+
+  .landing-hero {
+    min-height: 34rem;
+    padding: var(--space-8);
+  }
+
+  .landing-env-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Onboarding */
+  .onboarding-mood__face,
+  .dashboard-mood-btn__face {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+
+  .onboarding-choice-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Dashboard */
+  .dashboard-main {
+    gap: var(--space-5);
+  }
+
+  .dashboard-environments {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .dashboard-environment {
+    min-width: 0;
+  }
+
+  /* Library */
+  .library-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Session: side-by-side layout for wider content */
+  .session-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    gap: 0;
+    align-items: start;
+  }
+
+  .session-preview {
+    grid-column: 1 / -1;
+  }
+
+  .session-tags {
+    grid-column: 1 / -1;
+  }
+
+  .session-copy {
+    grid-column: 1 / -1;
+  }
+
+  .session-stats {
+    grid-column: 1 / -1;
+  }
+
+  /* Review: badge + title side-by-side on tablet */
+  .review-hero {
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    text-align: left;
+    gap: var(--space-6);
+    align-items: center;
+  }
+
+  .review-main {
+    gap: var(--space-5);
+  }
+
+  .review-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ── LG: Desktops (≥ 1200px / 75em) ─────────────────────────── */
+@media (min-width: 75em) {
+
+  /* Container */
+  .container {
+    width: min(100% - 4rem, var(--container-lg));
+  }
+
+  /* Grid helpers */
+  .grid--cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grid--dashboard {
+    grid-template-columns: 1.2fr 1fr;
+    align-items: start;
+  }
+
+  /* Landing */
+  .landing-env-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
