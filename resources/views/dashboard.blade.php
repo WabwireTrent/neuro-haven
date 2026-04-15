@@ -1,188 +1,172 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
 @section('title', 'Dashboard')
 @section('page', 'dashboard')
 
 @section('content')
-<div class="container">
-    <div class="dashboard-shell">
-        <div class="dashboard-app">
-            <header class="dashboard-header">
-                <div class="dashboard-avatar" aria-hidden="true">{{ strtoupper(substr($user['name'], 0, 1)) }}</div>
-                <div class="dashboard-greeting">
-                    <h1 data-dashboard-greeting>Hi, {{ $user['name'] }}</h1>
-                    <p class="dashboard-streak">🔥 {{ $user['streak'] }} Day Streak</p>
-                </div>
-                <div class="notif-anchor">
-                    <button class="dashboard-icon-btn" type="button" aria-label="Notifications" aria-expanded="false" data-notif-toggle>
-                        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
-                        <span class="notif-badge" data-notif-badge aria-hidden="true"></span>
-                    </button>
-                </div>
-            </header>
-
-            <section class="dashboard-main">
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>Today's Check-in</h2>
-                        <span class="dashboard-widget__eyebrow">Quick Action</span>
-                    </div>
-                    <p class="dashboard-mood-prompt">How are you feeling right now?</p>
-                    @if ($user['today_mood'])
-                        <div class="surface p-4" style="background: rgba(29, 159, 118, 0.05); border-left: 4px solid var(--color-primary);">
-                            <p style="margin: 0; font-weight: 600;">{{ ucfirst($user['today_mood']->mood) }}</p>
-                            <p class="text-muted" style="margin: 0.25rem 0 0;">{{ $user['today_mood']->mood_scale }}/10</p>
-                        </div>
-                    @else
-                        <a href="{{ route('mood.tracker') }}" class="btn btn-primary" style="display: inline-block; margin-top: 0.5rem;">Log Today's Mood</a>
-                    @endif
-                </section>
-
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>This Week's Insights</h2>
-                        <span class="dashboard-widget__eyebrow">7 Days</span>
-                    </div>
-                    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Wellness Score</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 1.75rem; font-weight: 700; color: var(--color-primary);">{{ $user['mood_score'] }}%</p>
-                        </article>
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Logged Days</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 1.75rem; font-weight: 700; color: var(--color-primary);">{{ $user['week_moods']->count() }}/7</p>
-                        </article>
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Consistency</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 1.75rem; font-weight: 700; color: var(--color-primary);">{{ $user['week_percent'] }}%</p>
-                        </article>
-                    </div>
-                </section>
-
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>Weekly Mood Trend</h2>
-                    </div>
-                    @if ($user['week_moods']->count() > 0)
-                        <div class="stack" style="gap: 0.75rem; margin-top: 1rem;">
-                            @for ($i = 0; $i < 7; $i++)
-                                @php
-                                    $date = now()->subDays(6 - $i)->toDateString();
-                                    $moodForDay = $user['week_moods']->firstWhere('mood_date', $date);
-                                @endphp
-                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <span style="font-size: 0.875rem; color: var(--color-text-muted); min-width: 50px;">
-                                        {{ \Carbon\Carbon::parse($date)->format('M d') }}
-                                    </span>
-                                    @if ($moodForDay)
-                                        <div style="flex: 1; height: 32px; background: rgba(29, 159, 118, {{ $moodForDay->mood_scale / 10 }}); border-radius: var(--radius-md); display: flex; align-items: center; padding: 0 0.75rem;">
-                                            <span style="font-weight: 600; font-size: 0.875rem;">{{ $moodForDay->mood_scale }}/10</span>
-                                        </div>
-                                    @else
-                                        <div style="flex: 1; height: 32px; background: var(--color-surface-muted); border-radius: var(--radius-md); display: flex; align-items: center; padding: 0 0.75rem;">
-                                            <span class="text-muted" style="font-size: 0.875rem;">—</span>
-                                        </div>
-                                    @endif
-                                </div>
-                            @endfor
-                        </div>
-                    @else
-                        <p class="text-muted">Start logging your mood to see trends.</p>
-                    @endif
-                </section>
-
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>VR Status</h2>
-                        <span class="dashboard-widget__eyebrow">Virtual Reality</span>
-                    </div>
-                    <div id="vr-status" class="surface p-4" style="text-align: center;">
-                        <div class="vr-status-indicator">
-                            <div class="vr-icon">🎧</div>
-                            <p class="vr-status-text">Checking VR connection...</p>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-section-head">
-                        <h2>Quick Actions</h2>
-                        <div class="cluster">
-                            <a href="{{ route('mood.tracker') }}" class="btn btn-secondary">Log Mood</a>
-                            <a href="{{ route('therapy.sessions') }}" class="btn btn-secondary">Sessions</a>
-                            <a href="{{ route('progress.tracking') }}" class="btn btn-secondary">Progress</a>
-                            <a href="{{ route('vr.assets') }}" class="btn btn-secondary">VR Assets</a>
-                            <a href="{{ route('vr.analytics') }}" class="btn btn-secondary">VR Analytics</a>
-                        </div>
-                    </div>
-                </section>
-            </section>
-
-        </div>
+<header class="dashboard-header">
+  <div class="dashboard-avatar" aria-hidden="true">{{ substr(Auth::user()->name, 0, 1) }}</div>
+  <div class="dashboard-greeting">
+    <h1>Hello, {{ Auth::user()->name }}</h1>
+    <p class="dashboard-streak">🔥 Keep up the great work!</p>
+  </div>
+  <div class="notif-anchor">
+    <button class="dashboard-icon-btn" type="button" aria-label="Notifications" aria-expanded="false" data-notif-toggle>
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span class="notif-badge" data-notif-badge aria-hidden="true"></span>
+    </button>
+    <div class="notif-panel" data-notif-panel aria-label="Notifications" hidden>
+      <div class="notif-panel__head">
+        <span class="notif-panel__title">Notifications</span>
+        <button class="notif-panel__clear" type="button" data-notif-clear>Mark all read</button>
+      </div>
+      <ul class="notif-list" data-notif-list></ul>
     </div>
-</div>
+  </div>
+  <a class="dashboard-icon-btn" href="{{ route('settings') }}" aria-label="Settings">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </a>
+  <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+    @csrf
+    <button class="dashboard-icon-btn" type="submit" aria-label="Log out">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
+  </form>
+</header>
 
-<style>
-    .mb-4 { margin-bottom: var(--space-4); }
-    .p-6 { padding: var(--space-6); }
-    .p-4 { padding: var(--space-4); }
-    .dashboard-section-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-    }
-    .cluster {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-    }
-    .grid {
-        display: grid;
-    }
-    .stack {
-        display: flex;
-        flex-direction: column;
-    }
-</style>
+<section class="dashboard-main">
+  <!-- Mood check-in first — most important action -->
+  <section class="card dashboard-widget">
+    <div class="dashboard-widget__head">
+      <h2>How are you feeling?</h2>
+      <span class="dashboard-widget__eyebrow">Today</span>
+    </div>
+    <p class="dashboard-mood-prompt">Tap to log your mood and get personalised sessions.</p>
+    <div class="dashboard-mood-row" data-dashboard-mood>
+      <button class="dashboard-mood-btn" data-mood="1" aria-label="Very sad">
+        <span class="dashboard-mood-emoji">😢</span>
+        <span class="dashboard-mood-label">Very Sad</span>
+      </button>
+      <button class="dashboard-mood-btn" data-mood="2" aria-label="Sad">
+        <span class="dashboard-mood-emoji">😞</span>
+        <span class="dashboard-mood-label">Sad</span>
+      </button>
+      <button class="dashboard-mood-btn" data-mood="3" aria-label="Neutral">
+        <span class="dashboard-mood-emoji">😐</span>
+        <span class="dashboard-mood-label">Neutral</span>
+      </button>
+      <button class="dashboard-mood-btn" data-mood="4" aria-label="Happy">
+        <span class="dashboard-mood-emoji">😊</span>
+        <span class="dashboard-mood-label">Happy</span>
+      </button>
+      <button class="dashboard-mood-btn" data-mood="5" aria-label="Very happy">
+        <span class="dashboard-mood-emoji">😁</span>
+        <span class="dashboard-mood-label">Very Happy</span>
+      </button>
+    </div>
+  </section>
 
+  <section class="dashboard-stats" data-dashboard-stats aria-label="Your progress stats">
+    <article class="card card-stat dashboard-stat-card">
+      <p class="dashboard-stat-label">Sessions This Week</p>
+      <strong class="dashboard-stat-value">{{ Auth::user()->vrSessions()->where('created_at', '>=', now()->startOfWeek())->count() }}</strong>
+      <p class="dashboard-stat-note">Keep it up!</p>
+    </article>
+    <article class="card card-stat dashboard-stat-card">
+      <p class="dashboard-stat-label">Current Streak</p>
+      <strong class="dashboard-stat-value">{{ Auth::user()->getCurrentStreak() ?? 0 }}</strong>
+      <p class="dashboard-stat-note">Days in a row</p>
+    </article>
+    <article class="card card-stat dashboard-stat-card">
+      <p class="dashboard-stat-label">Avg Mood</p>
+      <strong class="dashboard-stat-value">{{ number_format(Auth::user()->moods()->avg('mood_scale') ?? 3, 1) }}</strong>
+      <p class="dashboard-stat-note">Out of 5</p>
+    </article>
+  </section>
+
+  <section class="card dashboard-widget">
+    <div class="dashboard-widget__head">
+      <h2>Mood This Week</h2>
+      <span class="dashboard-widget__eyebrow">Mon - Sun</span>
+    </div>
+    <div class="dashboard-chart" data-dashboard-chart aria-label="Weekly mood chart">
+      <!-- Chart will be populated by JavaScript -->
+    </div>
+    <div class="dashboard-chart-labels" data-dashboard-chart-labels>
+      <span>Mon</span>
+      <span>Tue</span>
+      <span>Wed</span>
+      <span>Thu</span>
+      <span>Fri</span>
+      <span>Sat</span>
+      <span>Sun</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="dashboard-section-head">
+      <h2>For Your Mood</h2>
+      <a class="dashboard-link" href="{{ route('library') }}">See All</a>
+    </div>
+    <div class="dashboard-environments" data-dashboard-environments>
+      <!-- Recommended environments will be populated by JavaScript -->
+    </div>
+  </section>
+
+  <section>
+    <div class="dashboard-section-head">
+      <h2>Recent Activity</h2>
+    </div>
+    <div class="dashboard-activity-list" data-dashboard-activity>
+      @foreach(Auth::user()->vrSessions()->latest()->take(5) as $session)
+        <article class="dashboard-activity-item">
+          <div class="dashboard-activity-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="dashboard-activity-content">
+            <p class="dashboard-activity-title">VR Session Completed</p>
+            <p class="dashboard-activity-meta">{{ $session->created_at->diffForHumans() }}</p>
+          </div>
+        </article>
+      @endforeach
+    </div>
+  </section>
+</section>
+
+<nav class="dashboard-bottom-nav" aria-label="Dashboard sections">
+  <a class="is-active" href="{{ route('dashboard') }}">Home</a>
+  <a href="{{ route('library') }}">Library</a>
+  <a href="{{ route('progress.tracking') }}">Insights</a>
+  <a href="{{ route('therapy.sessions') }}">Session</a>
+</nav>
+@endsection
+
+@section('scripts')
+<script src="{{ asset('js/dashboard.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', async function() {
-    const vrStatusDiv = document.getElementById('vr-status');
-    const vrIcon = vrStatusDiv.querySelector('.vr-icon');
-    const vrText = vrStatusDiv.querySelector('.vr-status-text');
+document.addEventListener('DOMContentLoaded', function () {
+  // Initialize dashboard functionality
+  if (typeof NHDashboard !== 'undefined') {
+    NHDashboard.init();
+  }
 
-    if (!navigator.xr) {
-        vrIcon.textContent = '❌';
-        vrText.textContent = 'VR not supported';
-        vrStatusDiv.style.background = 'rgba(239, 68, 68, 0.05)';
-        vrStatusDiv.style.borderLeft = '4px solid #ef4444';
-        return;
-    }
-
-    try {
-        const supported = await navigator.xr.isSessionSupported('immersive-vr');
-        if (supported) {
-            vrIcon.textContent = '✅';
-            vrText.textContent = 'VR Ready';
-            vrStatusDiv.style.background = 'rgba(29, 159, 118, 0.05)';
-            vrStatusDiv.style.borderLeft = '4px solid var(--color-primary)';
-        } else {
-            vrIcon.textContent = '⚠️';
-            vrText.textContent = 'VR headset not detected';
-            vrStatusDiv.style.background = 'rgba(245, 158, 11, 0.05)';
-            vrStatusDiv.style.borderLeft = '4px solid #f59e0b';
-        }
-    } catch (error) {
-        console.error('Error checking VR support:', error);
-        vrIcon.textContent = '❓';
-        vrText.textContent = 'Unable to check VR status';
-        vrStatusDiv.style.background = 'rgba(156, 163, 175, 0.05)';
-        vrStatusDiv.style.borderLeft = '4px solid #9ca3af';
-    }
+  // Apply saved theme
+  var theme = localStorage.getItem('nh_theme');
+  if (theme && theme !== 'auto') document.documentElement.setAttribute('data-theme', theme);
+  if (localStorage.getItem('nh_reduced_motion') === '1') document.documentElement.classList.add('reduce-motion');
 });
 </script>
 @endsection

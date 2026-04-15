@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'onboarding_completed', 'preferred_mood', 'therapy_concerns', 'therapy_preference'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -60,5 +60,70 @@ class User extends Authenticatable
     public function vrSessions()
     {
         return $this->hasMany(VRSession::class);
+    }
+
+    // Therapist relationships
+    public function assignedPatients()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'therapist_patient_assignments',
+            'therapist_id',
+            'patient_id'
+        )->withPivot('status', 'notes', 'assigned_at')
+         ->wherePivot('status', 'active');
+    }
+
+    public function assignedTherapists()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'therapist_patient_assignments',
+            'patient_id',
+            'therapist_id'
+        )->withPivot('status', 'notes', 'assigned_at')
+         ->wherePivot('status', 'active');
+    }
+
+    public function therapistAssignments()
+    {
+        return $this->hasMany(TherapistPatientAssignment::class, 'therapist_id');
+    }
+
+    public function patientAssignments()
+    {
+        return $this->hasMany(TherapistPatientAssignment::class, 'patient_id');
+    }
+
+    // Notifications
+    public function notifications()
+    {
+        return $this->hasMany(SystemNotification::class);
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
+
+    public function getCurrentStreak()
+    {
+        $streak = 0;
+        $currentDate = today()->toDateString();
+
+        while (true) {
+            $moodExists = $this->moods()
+                              ->whereDate('mood_date', $currentDate)
+                              ->exists();
+
+            if (!$moodExists) {
+                break;
+            }
+
+            $streak++;
+            $currentDate = date('Y-m-d', strtotime($currentDate . ' -1 day'));
+        }
+
+        return $streak;
     }
 }

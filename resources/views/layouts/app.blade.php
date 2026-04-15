@@ -47,10 +47,23 @@
                         <a class="nav-link" href="{{ route('vr.analytics') }}" data-nav-link="analytics">VR Analytics</a>
                         
                         @auth
+                            <!-- Notifications -->
+                            <a class="nav-link" href="{{ route('notifications.index') }}" data-nav-link="notifications">
+                                🔔 Notifications
+                                @if(auth()->user()->unreadNotifications()->count() > 0)
+                                    <span style="display: inline-block; background: #ef4444; color: white; font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 1rem; margin-left: 0.25rem;">
+                                        {{ auth()->user()->unreadNotifications()->count() }}
+                                    </span>
+                                @endif
+                            </a>
+                            
                             <!-- Therapist & Admin Links -->
                             @if(auth()->user()->isTherapist() || auth()->user()->isAdmin())
                                 <div style="height: 1px; background: rgba(29, 159, 118, 0.2); margin: 0 0.5rem;"></div>
                                 <a class="nav-link" href="{{ route('therapist.dashboard') }}" data-nav-link="therapist">👨‍⚕️ Therapist</a>
+                                @if(auth()->user()->isTherapist())
+                                    <a class="nav-link" href="{{ route('therapist.assignments.index') }}" data-nav-link="assignments">📋 Assignments</a>
+                                @endif
                             @endif
                             
                             @if(auth()->user()->isAdmin())
@@ -79,10 +92,16 @@
                     <a class="nav-link" href="{{ route('vr.analytics') }}" data-nav-link="analytics">VR Analytics</a>
                     
                     @auth
+                        <p style="margin: 1rem 0 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase;">Account</p>
+                        <a class="nav-link" href="{{ route('notifications.index') }}" data-nav-link="notifications">🔔 Notifications</a>
+                        
                         @if(auth()->user()->isTherapist() || auth()->user()->isAdmin())
                             <p style="margin: 1rem 0 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase;">Therapist</p>
                             <a class="nav-link" href="{{ route('therapist.dashboard') }}" data-nav-link="therapist">Therapist Dashboard</a>
                             <a class="nav-link" href="{{ route('therapist.patients') }}" data-nav-link="patients">My Patients</a>
+                            @if(auth()->user()->isTherapist())
+                                <a class="nav-link" href="{{ route('therapist.assignments.index') }}" data-nav-link="assignments">📋 Patient Assignments</a>
+                            @endif
                         @endif
                         
                         @if(auth()->user()->isAdmin())
@@ -103,5 +122,9 @@
     <script src="{{ asset('js/notifications.js') }}"></script>
     <script src="{{ asset('js/dashboard.js') }}"></script>
     @stack('scripts')
+    
+    @auth
+        @include('components.notification-widget')
+    @endauth
 </body>
 </html>

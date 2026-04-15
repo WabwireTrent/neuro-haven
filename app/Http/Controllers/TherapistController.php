@@ -13,9 +13,11 @@ class TherapistController extends Controller
     {
         $therapistId = auth()->id();
 
-        // Get patients assigned to this therapist (for now, show all patients they can access)
-        // You can expand this logic based on your patient-therapist relationship
+        // Get ONLY patients assigned to this therapist
         $patients = User::where('role', 'patient')
+            ->whereHas('assignedTherapists', function ($query) use ($therapistId) {
+                $query->where('therapist_id', $therapistId);
+            })
             ->withCount(['moods', 'vrSessions'])
             ->with(['moods' => function ($query) {
                 $query->latest()->take(1);
@@ -25,38 +27,48 @@ class TherapistController extends Controller
         // Therapist's personal analytics
         $totalPatients = $patients->total();
         $activePatientsThisWeek = User::where('role', 'patient')
+            ->whereHas('assignedTherapists', function ($query) use ($therapistId) {
+                $query->where('therapist_id', $therapistId);
+            })
             ->whereHas('vrSessions', function ($query) {
                 $query->whereBetween('started_at', [now()->startOfWeek(), now()->endOfWeek()]);
             })
             ->count();
 
-        // Recent patient activities
-        $recentMoods = Mood::with('user')
-            ->whereHas('user', function ($query) {
-                $query->where('role', 'patient');
+        // Recent patient activities (from assigned patients only)
+        $assignedPatientIds = User::where('role', 'patient')
+            ->whereHas('assignedTherapists', function ($query) use ($therapistId) {
+                $query->where('therapist_id', $therapistId);
             })
+            ->pluck('id');
+
+        $recentMoods = Mood::with('user')
+            ->whereIn('user_id', $assignedPatientIds)
             ->latest()
             ->take(10)
             ->get();
 
         $recentVRSessions = VRSession::with('user')
-            ->whereHas('user', function ($query) {
-                $query->where('role', 'patient');
-            })
+            ->whereIn('user_id', $assignedPatientIds)
             ->latest()
             ->take(10)
             ->get();
 
-        // Most used VR assets by patients
-        $popularAssets = VRSession::selectRaw('vr_asset_title, COUNT(*) as sessions_count, AVG(session_quality) as avg_quality')
+        // Most used VR assets by assigned patients
+        $popularAssets = VRSession::whereIn('user_id', $assignedPatientIds)
+            ->selectRaw('vr_asset_title, COUNT(*) as sessions_count, AVG(session_quality) as avg_quality')
             ->groupBy('vr_asset_title')
             ->orderBy('sessions_count', 'desc')
             ->take(5)
             ->get();
 
-        // Average mood trends
-        $avgMoodToday = Mood::whereDate('mood_date', today())->avg('mood_scale') ?? 0;
-        $avgMoodWeek = Mood::whereBetween('mood_date', [now()->startOfWeek(), now()->endOfWeek()])->avg('mood_scale') ?? 0;
+        // Average mood trends for assigned patients
+        $avgMoodToday = Mood::whereIn('user_id', $assignedPatientIds)
+            ->whereDate('mood_date', today())
+            ->avg('mood_scale') ?? 0;
+        $avgMoodWeek = Mood::whereIn('user_id', $assignedPatientIds)
+            ->whereBetween('mood_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->avg('mood_scale') ?? 0;
 
         $analytics = [
             'total_patients' => $totalPatients,

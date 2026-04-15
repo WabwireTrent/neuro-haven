@@ -85,7 +85,7 @@
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-size: 1.25rem; color: var(--color-primary);">
-                                        {'★'.repeat(round($asset->avg_quality ?? 0))}{'☆'.repeat(5 - round($asset->avg_quality ?? 0))}
+                                        {{ str_repeat('★', round($asset->avg_quality ?? 0)) }}{{ str_repeat('☆', 5 - round($asset->avg_quality ?? 0)) }}
                                     </div>
                                     <p class="text-muted" style="margin: 0; font-size: 0.875rem;">{{ round($asset->avg_quality ?? 0, 1) }}/5</p>
                                 </div>

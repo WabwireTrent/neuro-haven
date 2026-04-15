@@ -74,6 +74,46 @@ class NeuroController extends Controller
         return view('therapy-sessions');
     }
 
+    public function session()
+    {
+        return view('session');
+    }
+
+    public function review()
+    {
+        return view('review');
+    }
+
+    public function settings()
+    {
+        return view('settings');
+    }
+
+    public function onboarding()
+    {
+        return view('onboarding');
+    }
+
+    public function completeOnboarding(Request $request)
+    {
+        $user = auth()->user();
+        $data = $request->validate([
+            'mood' => 'required|string',
+            'concerns' => 'required|array',
+            'preference' => 'required|string'
+        ]);
+
+        // Save onboarding data to user profile or preferences
+        $user->update([
+            'onboarding_completed' => true,
+            'preferred_mood' => $data['mood'],
+            'therapy_concerns' => json_encode($data['concerns']),
+            'therapy_preference' => $data['preference']
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
     public function progressTracking()
     {
         $userId = auth()->id();

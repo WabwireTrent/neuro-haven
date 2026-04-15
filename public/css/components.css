@@ -2250,6 +2250,20 @@
 .library-card {
   padding: 0;
   overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.library-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(29, 159, 118, 0.15);
+}
+
+.library-card__link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
 }
 
 .library-card__media {
