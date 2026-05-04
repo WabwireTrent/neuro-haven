@@ -12,7 +12,7 @@
       <h1>Accessible mental health through virtual reality</h1>
       <p class="landing-hero__lead">Stigma-free, affordable therapy for everyone. Breakthrough barriers with immersive care tailored for the Ugandan community.</p>
       <div class="landing-hero__actions">
-        <a class="btn btn-primary btn-lg" href="{{ route('register') }}">Start free session</a>
+        <a class="btn btn-primary btn-lg" href="{{ route('register.choice') }}">Start free session</a>
         <a class="btn landing-demo-btn btn-lg" href="{{ route('library') }}">Browse Library</a>
       </div>
     </div>

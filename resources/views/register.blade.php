@@ -66,8 +66,20 @@
 
     <div class="auth-content">
       <div class="auth-heading">
-        <h1 id="register-heading">Create your account</h1>
-        <p>Start your wellness journey today — it's free.</p>
+        <h1 id="register-heading">
+          @if($type === 'therapist')
+            Create Your Therapist Profile
+          @else
+            Create your account
+          @endif
+        </h1>
+        <p>
+          @if($type === 'therapist')
+            Register as a mental health professional and start helping patients today.
+          @else
+            Start your wellness journey today — it's free.
+          @endif
+        </p>
       </div>
 
       @if($errors->any())
@@ -104,6 +116,7 @@
 
       <form class="auth-form" method="POST" action="{{ route('register.post') }}" data-validate novalidate>
         @csrf
+        <input type="hidden" name="type" value="{{ $type }}">
 
         <div class="input-group input-group--icon">
           <label for="register-name">Display Name</label>
@@ -192,6 +205,85 @@
           @enderror
         </div>
 
+        <!-- Therapist-Specific Fields -->
+        @if($type === 'therapist')
+          <div style="background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: 0.75rem; margin: 1.5rem 0;">
+            <h3 style="margin: 0 0 1rem; font-size: 1rem;">Professional Information</h3>
+            
+            <div class="input-group input-group--icon">
+              <label for="license-number">License Number *</label>
+              <div class="input-wrap">
+                <span class="input-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </span>
+                <input class="input" id="license-number" name="license_number" type="text"
+                  value="{{ old('license_number') }}" placeholder="Enter your professional license number" autocomplete="off" required>
+              </div>
+              @error('license_number')
+                <p class="field-error" role="alert">{{ $message }}</p>
+              @enderror
+            </div>
+
+            <div class="input-group input-group--icon">
+              <label for="specialization">Specialization *</label>
+              <div class="input-wrap">
+                <span class="input-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L15.09 8.26H22L17.82 12.61L19.91 18.87L12 14.52L4.09 18.87L6.18 12.61L2 8.26H8.91L12 2Z"/>
+                  </svg>
+                </span>
+                <select class="select" id="specialization" name="specialization" required>
+                  <option value="">Select your specialization</option>
+                  <option value="clinical_psychology" {{ old('specialization') == 'clinical_psychology' ? 'selected' : '' }}>Clinical Psychology</option>
+                  <option value="cognitive_behavioral_therapy" {{ old('specialization') == 'cognitive_behavioral_therapy' ? 'selected' : '' }}>Cognitive Behavioral Therapy</option>
+                  <option value="anxiety_disorders" {{ old('specialization') == 'anxiety_disorders' ? 'selected' : '' }}>Anxiety Disorders</option>
+                  <option value="depression" {{ old('specialization') == 'depression' ? 'selected' : '' }}>Depression</option>
+                  <option value="trauma_ptsd" {{ old('specialization') == 'trauma_ptsd' ? 'selected' : '' }}>Trauma & PTSD</option>
+                  <option value="mindfulness" {{ old('specialization') == 'mindfulness' ? 'selected' : '' }}>Mindfulness & Meditation</option>
+                  <option value="stress_management" {{ old('specialization') == 'stress_management' ? 'selected' : '' }}>Stress Management</option>
+                  <option value="other" {{ old('specialization') == 'other' ? 'selected' : '' }}>Other</option>
+                </select>
+              </div>
+              @error('specialization')
+                <p class="field-error" role="alert">{{ $message }}</p>
+              @enderror
+            </div>
+
+            <div class="input-group input-group--icon">
+              <label for="years-experience">Years of Experience *</label>
+              <div class="input-wrap">
+                <span class="input-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </span>
+                <input class="input" id="years-experience" name="years_of_experience" type="number"
+                  value="{{ old('years_of_experience') }}" placeholder="e.g., 5" min="0" max="70" required>
+              </div>
+              @error('years_of_experience')
+                <p class="field-error" role="alert">{{ $message }}</p>
+              @enderror
+            </div>
+
+            <div class="input-group">
+              <label for="bio">Professional Bio (Optional)</label>
+              <textarea class="input" id="bio" name="bio" rows="4"
+                placeholder="Tell patients about your approach, experience, and how you can help..."
+                maxlength="1000" style="resize: vertical;">{{ old('bio') }}</textarea>
+              <small style="color: #6b7280; margin-top: 0.25rem; display: block;">
+                <span id="bio-count">0</span>/1000 characters
+              </small>
+              @error('bio')
+                <p class="field-error" role="alert">{{ $message }}</p>
+              @enderror
+            </div>
+          </div>
+        @endif
+
         <div class="auth-consent" data-field-group>
           <div class="auth-consent__row">
             <input id="privacy" name="privacy" type="checkbox" {{ old('privacy') ? 'checked' : '' }} required>
@@ -202,7 +294,13 @@
           @enderror
         </div>
 
-        <button class="btn btn-primary btn-lg auth-submit" type="submit">Get Started</button>
+        <button class="btn btn-primary btn-lg auth-submit" type="submit">
+          @if($type === 'therapist')
+            Create Therapist Profile
+          @else
+            Get Started
+          @endif
+        </button>
       </form>
 
       <p class="auth-trust">
@@ -237,6 +335,17 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.querySelector('.eye-show').style.display = hide ? 'none' : '';
     btn.querySelector('.eye-hide').style.display = hide ? '' : 'none';
   });
+
+  // Bio character counter
+  var bio = document.getElementById('bio');
+  var bioCount = document.getElementById('bio-count');
+  if (bio && bioCount) {
+    bio.addEventListener('input', function() {
+      bioCount.textContent = this.value.length;
+    });
+    // Initialize counter on page load
+    bioCount.textContent = bio.value.length;
+  }
 });
 </script>
 @endsection

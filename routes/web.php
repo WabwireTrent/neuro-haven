@@ -46,7 +46,8 @@ Route::get('/terms', function () {
 // Auth routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::get('/register-choice', [AuthController::class, 'showRegisterChoice'])->name('register.choice');
+Route::get('/register/{type?}', [AuthController::class, 'showRegister'])->name('register')->where('type', 'patient|therapist');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
