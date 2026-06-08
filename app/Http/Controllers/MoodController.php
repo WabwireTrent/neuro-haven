@@ -4,12 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Mood;
 use App\Models\User;
+use App\Models\VRAsset;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class MoodController extends Controller
 {
     protected NotificationService $notificationService;
+
+    private array $moodRecommendations = [
+        'excellent' => ['category' => 'Inspiration', 'reason' => 'Keep riding that positive energy with an uplifting experience.'],
+        'happy' => ['category' => 'Nature', 'reason' => 'Celebrate your good vibes with a beautiful escape into nature.'],
+        'calm' => ['category' => 'Meditation', 'reason' => 'Deepen your sense of peace with a guided meditation session.'],
+        'anxious' => ['category' => 'Breathing', 'reason' => 'Ease your anxiety with a guided breathing exercise in a serene environment.'],
+        'sad' => ['category' => 'Inspiration', 'reason' => 'Lift your spirits with an inspiring mountain view experience.'],
+        'stressed' => ['category' => 'Relaxation', 'reason' => 'Release your stress with a calming virtual relaxation session.'],
+    ];
 
     public function __construct(NotificationService $notificationService)
     {
@@ -46,8 +56,24 @@ class MoodController extends Controller
         $currentStreak = $user->getCurrentStreak();
         $this->notificationService->notifyMilestone($user, $currentStreak);
 
+        // Get session suggestion based on mood
+        $recommendation = $this->moodRecommendations[$validated['mood']] ?? null;
+        $suggestedSession = null;
+        if ($recommendation) {
+            $suggestedSession = VRAsset::active()
+                ->byCategory($recommendation['category'])
+                ->inRandomOrder()
+                ->first();
+
+            if (!$suggestedSession) {
+                $suggestedSession = VRAsset::active()->inRandomOrder()->first();
+            }
+        }
+
         return redirect()->route('mood.tracker')
-                        ->with('success', 'Mood logged successfully!');
+            ->with('success', 'Mood logged successfully!')
+            ->with('suggested_session', $suggestedSession)
+            ->with('suggestion_reason', $recommendation['reason'] ?? 'Try a session that matches your current mood.');
     }
 
     public function getWeeklyData()

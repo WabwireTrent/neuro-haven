@@ -1,428 +1,438 @@
 @extends('layouts.app')
 
 @section('title', 'VR Therapeutic Assets')
-@section('page', 'vr-assets')
+@section('page', 'vr')
 
 @section('content')
-<div class="container">
-    <div class="dashboard-shell">
-        <div class="dashboard-app">
-            <header class="dashboard-header">
-                <div class="dashboard-avatar" aria-hidden="true">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
-                <div class="dashboard-greeting">
-                    <h1>VR Therapeutic Assets</h1>
-                    <p class="dashboard-streak">Immersive therapy experiences</p>
-                </div>
-            </header>
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>VR Therapeutic Assets</h1>
+    <p>Immersive therapy experiences for your healing journey</p>
+  </div>
+  <div class="page-header__actions">
+    <a href="{{ route('session') }}" class="btn btn-primary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Start Session
+    </a>
+  </div>
+</div>
 
-            <section class="dashboard-main">
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>Available VR Experiences</h2>
-                        <span class="dashboard-widget__eyebrow">Therapeutic Assets</span>
-                    </div>
-                    <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
-                        @foreach($assets as $asset)
-                        <article class="surface p-4" style="border-radius: var(--radius-lg); overflow: hidden;">
-                            <div style="height: 150px; background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); border-radius: var(--radius-md); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; color: white;">
-                                <span style="font-size: 2rem;">
-                                    @switch($asset['id'])
-                                        @case(1) 🌿 @break
-                                        @case(2) 🌊 @break
-                                        @case(3) 🏔️ @break
-                                        @case(4) 🫁 @break
-                                        @case(5) ⭐ @break
-                                        @case(6) 🏮 @break
-                                    @endswitch
-                                </span>
-                            </div>
-                            <h3 style="margin: 0 0 0.5rem; font-size: 1.125rem; font-weight: 600;">{{ $asset['title'] }}</h3>
-                            <p class="text-muted" style="margin: 0 0 1rem; font-size: 0.875rem;">{{ $asset['description'] }}</p>
-                            <div class="cluster" style="margin-bottom: 1rem;">
-                                <span class="badge">{{ $asset['category'] }}</span>
-                                <span class="badge">{{ $asset['duration'] }}</span>
-                            </div>
-                            <button class="btn btn-primary" style="width: 100%;" onclick="launchVR({{ $asset['id'] }})">
-                                Launch Experience
-                            </button>
-                        </article>
-                        @endforeach
-                    </div>
-                </section>
-
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>VR Setup Instructions</h2>
-                    </div>
-                    <div class="stack" style="gap: 1rem;">
-                        <div class="surface p-4">
-                            <h4 style="margin: 0 0 0.5rem;">1. Connect Your VR Headset</h4>
-                            <p class="text-muted" style="margin: 0;">Ensure your VR headset is properly connected and powered on.</p>
-                        </div>
-                        <div class="surface p-4">
-                            <h4 style="margin: 0 0 0.5rem;">2. Enable WebXR</h4>
-                            <p class="text-muted" style="margin: 0;">Make sure your browser supports WebXR and VR is enabled in settings.</p>
-                        </div>
-                        <div class="surface p-4">
-                            <h4 style="margin: 0 0 0.5rem;">3. Start Your Session</h4>
-                            <p class="text-muted" style="margin: 0;">Click "Launch Experience" on any asset to begin your VR therapy session.</p>
-                        </div>
-                    </div>
-                </section>
-            </section>
+<div class="card-grid" style="margin-bottom: 1.25rem;">
+  @foreach($assets as $asset)
+  <div class="card" style="display: flex; flex-direction: column;">
+    @php
+      $imgMap = [
+        1 => 'forest.svg',
+        2 => 'ocean.svg',
+        3 => 'mountain.svg',
+        4 => 'breathing.svg',
+        5 => 'starry.svg',
+        6 => 'zen.svg',
+      ];
+      $imgFile = $asset->image_path
+        ? Storage::url($asset->image_path)
+        : (isset($imgMap[$asset->id])
+          ? asset('assets/images/vr/' . $imgMap[$asset->id])
+          : null);
+    @endphp
+    <div style="height: 140px; border-radius: var(--radius-2xl) var(--radius-2xl) 0 0; overflow: hidden; position: relative; @if(!$imgFile) background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); @endif">
+      @if($imgFile)
+        <img src="{{ $imgFile }}" alt="{{ $asset->title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+      @else
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 2.5rem; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));">🌿</span>
         </div>
+      @endif
     </div>
+    <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column;">
+      <h4 style="margin: 0 0 0.375rem; font-size: 1.05rem;">{{ $asset->title }}</h4>
+      <p class="text-muted text-sm" style="margin: 0 0 0.75rem; flex: 1;">{{ $asset->description }}</p>
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+        <span class="badge badge--secondary">{{ $asset->category }}</span>
+        <span class="badge badge--neutral">{{ $asset->duration_minutes ?? 10 }} min</span>
+      </div>
+      <button class="btn btn-primary" style="width: 100%;" onclick="launchUnityVR({{ $asset->id }})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Launch Experience
+      </button>
+    </div>
+  </div>
+  @endforeach
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h4 class="card-header__title">VR Setup Instructions</h4>
+    <span class="badge badge--info">How-to</span>
+  </div>
+  <div class="card-body">
+    <div style="display: grid; gap: 0.75rem;">
+      <div style="display: flex; gap: 1rem; padding: 1rem; background: var(--color-surface-muted); border-radius: var(--radius-xl);">
+        <div style="width: 36px; height: 36px; border-radius: var(--radius-lg); background: var(--color-primary-soft); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">1</div>
+        <div>
+          <p style="font-weight: 600; margin: 0 0 0.125rem;">Connect Your VR Headset</p>
+          <p class="text-muted text-sm" style="margin: 0 0 0.375rem;">Ensure your VR headset is properly connected and powered on.</p>
+          <span id="vr-assets-status-badge" class="badge badge--neutral" style="font-size:0.65rem;">Checking VR connection...</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 1rem; padding: 1rem; background: var(--color-surface-muted); border-radius: var(--radius-xl);">
+        <div style="width: 36px; height: 36px; border-radius: var(--radius-lg); background: var(--color-secondary-soft); color: var(--color-secondary); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">2</div>
+        <div>
+          <p style="font-weight: 600; margin: 0 0 0.125rem;">Enable WebXR</p>
+          <p class="text-muted text-sm" style="margin: 0;">Make sure your browser supports WebXR and VR is enabled in settings.</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 1rem; padding: 1rem; background: var(--color-surface-muted); border-radius: var(--radius-xl);">
+        <div style="width: 36px; height: 36px; border-radius: var(--radius-lg); background: var(--color-accent-soft); color: var(--color-accent); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">3</div>
+        <div>
+          <p style="font-weight: 600; margin: 0 0 0.125rem;">Start Your Session</p>
+          <p class="text-muted text-sm" style="margin: 0;">Click "Launch Experience" on any asset to begin your VR therapy session.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-async function launchVR(assetId) {
-    if (!navigator.xr) {
-        alert('WebXR is not supported on this device/browser.');
-        return;
-    }
+let currentSessionId = null;
+let statusPollInterval = null;
 
-    try {
-        const supported = await navigator.xr.isSessionSupported('immersive-vr');
-        if (!supported) {
-            alert('Immersive VR is not supported. Please check your VR headset connection.');
-            return;
-        }
-
-        // Get current mood before session
-        const moodBefore = await getCurrentMood();
-
-        // Start VR session tracking
-        const sessionData = await startVRSession(assetId, moodBefore);
-
-        // Start WebXR session
-        const session = await navigator.xr.requestSession('immersive-vr', {
-            requiredFeatures: ['local-floor', 'bounded-floor']
-        });
-
-        // Show VR experience
-        showVRExperience(assetId, session, sessionData);
-
-    } catch (error) {
-        console.error('Error starting VR session:', error);
-        alert('Error starting VR session. Please try again.');
-    }
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 }
 
-async function getCurrentMood() {
-    // Get today's mood from the server
+async function launchUnityVR(assetId) {
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Launching...';
+
     try {
-        const response = await fetch('/api/user/current-mood', {
-            method: 'GET',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                'Accept': 'application/json'
-            }
+        const moodResponse = await fetch('/api/user/current-mood', {
+            headers: { 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' }
         });
-        const data = await response.json();
-        return data.mood ? data.mood.mood_scale : null;
-    } catch (error) {
-        console.error('Error getting current mood:', error);
-        return null;
-    }
-}
+        const moodData = await moodResponse.json();
+        const moodBefore = moodData.mood ? moodData.mood.mood_scale : null;
 
-async function startVRSession(assetId, moodBefore) {
-    const assets = @json($assets);
-    const asset = assets.find(a => a.id === assetId);
-
-    try {
-        const response = await fetch('/api/vr-sessions/start', {
+        const response = await fetch('/api/vr/launch-unity', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                'X-CSRF-TOKEN': getCsrfToken(),
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
                 vr_asset_id: assetId,
-                vr_asset_title: asset.title,
-                mood_before: moodBefore,
-                device_type: navigator.xr ? 'vr-headset' : 'browser'
+                mood_before: moodBefore
             })
         });
-        return await response.json();
+
+        const data = await response.json();
+
+        if (!data.success) {
+            alert('Failed to launch VR experience: ' + (data.error || 'Unknown error'));
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
+        }
+
+        currentSessionId = data.session.id;
+        showUnityLaunchModal(data);
+
+        startStatusPolling(data.session.id);
+
     } catch (error) {
-        console.error('Error starting session tracking:', error);
-        return null;
+        console.error('Error launching Unity VR:', error);
+        alert('Error launching VR experience. Make sure the backend services are running.');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
-async function endVRSession(sessionId, duration, moodAfter, quality, notes) {
+function showUnityLaunchModal(data) {
+    const existing = document.getElementById('unity-launch-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'unity-launch-modal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+    modal.innerHTML = `
+        <div style="background:var(--color-surface);border-radius:var(--radius-2xl);padding:2rem;max-width:520px;width:90%;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:1rem;">🎮</div>
+            <h3 style="margin:0 0 0.5rem;">Launching VR Experience</h3>
+            <p style="color:var(--color-text-secondary);margin:0 0 1.5rem;">
+                The Unity VR application is starting on your PC. 
+                Put on your Meta Quest headset and ensure it is connected via Link cable or Air Link.
+            </p>
+            <div id="launch-status" style="margin-bottom:1.5rem;">
+                <div style="display:flex;align-items:center;gap:0.75rem;justify-content:center;">
+                    <div class="spinner" style="width:20px;height:20px;border:3px solid var(--color-border);border-top-color:var(--color-primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                    <span id="status-text" style="font-weight:500;">Waiting for Unity connection...</span>
+                </div>
+            </div>
+            <div id="session-info" style="display:none;margin-bottom:1.5rem;padding:1rem;background:var(--color-surface-muted);border-radius:var(--radius-xl);">
+                <p style="margin:0 0 0.25rem;"><strong>Scene:</strong> <span id="scene-name">${data.session.vr_asset_title || 'Unknown'}</span></p>
+                <p style="margin:0 0 0.25rem;"><strong>Duration:</strong> <span id="session-duration">${Math.floor(data.duration_seconds / 60)}:${(data.duration_seconds % 60).toString().padStart(2, '0')}</span></p>
+                <p style="margin:0;"><strong>Timer:</strong> <span id="session-timer">00:00</span></p>
+            </div>
+            <div style="display:flex;gap:0.5rem;justify-content:center;">
+                <button onclick="closeUnityModal()" class="btn btn-secondary btn-sm">Cancel</button>
+                <button id="end-unity-session-btn" onclick="endUnitySession()" class="btn btn-danger btn-sm" style="display:none;background:#ef4444;color:#fff;">End Session</button>
+            </div>
+            <p style="color:var(--color-text-muted);font-size:0.8rem;margin:1rem 0 0;">
+                Session ID: ${data.session.id}
+            </p>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const style = document.createElement('style');
+    style.id = 'unity-modal-styles';
+    style.textContent = `
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-danger { background: #ef4444; color: #fff; border: none; }
+        .btn-danger:hover { background: #dc2626; }
+    `;
+    document.head.appendChild(style);
+}
+
+function startStatusPolling(sessionId) {
+    if (statusPollInterval) clearInterval(statusPollInterval);
+
+    let startTime = Date.now();
+
+    statusPollInterval = setInterval(async () => {
+        try {
+            const response = await fetch('/api/vr/check-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ session_id: sessionId })
+            });
+
+            const data = await response.json();
+            const statusText = document.getElementById('status-text');
+            const sessionInfo = document.getElementById('session-info');
+            const endBtn = document.getElementById('end-unity-session-btn');
+            const timerEl = document.getElementById('session-timer');
+            const launchStatus = document.getElementById('launch-status');
+
+            if (data.is_completed) {
+                clearInterval(statusPollInterval);
+                statusPollInterval = null;
+                if (statusText) statusText.textContent = 'Session completed.';
+                if (endBtn) endBtn.style.display = 'none';
+                return;
+            }
+
+            switch (data.unity_status) {
+                case 'start':
+                    if (statusText) statusText.textContent = 'Preparing VR environment...';
+                    break;
+                case 'running':
+                    if (statusText) statusText.textContent = 'VR experience is active on your headset.';
+                    if (sessionInfo) sessionInfo.style.display = 'block';
+                    if (endBtn) endBtn.style.display = 'inline-flex';
+                    if (launchStatus) {
+                        const spinner = launchStatus.querySelector('.spinner');
+                        if (spinner) {
+                            spinner.style.borderTopColor = '#22c55e';
+                            spinner.style.animation = 'none';
+                            spinner.style.width = '12px';
+                            spinner.style.height = '12px';
+                            spinner.style.background = '#22c55e';
+                            spinner.style.borderRadius = '50%';
+                        }
+                    }
+                    if (timerEl) {
+                        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                        const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                        const s = (elapsed % 60).toString().padStart(2, '0');
+                        timerEl.textContent = m + ':' + s;
+                    }
+                    break;
+                case 'ended':
+                    if (statusText) statusText.textContent = 'VR session ended.';
+                    if (endBtn) endBtn.style.display = 'none';
+                    clearInterval(statusPollInterval);
+                    statusPollInterval = null;
+                    break;
+                case 'idle':
+                    if (statusText) statusText.textContent = 'Waiting for Unity to connect...';
+                    break;
+                case 'backend-unreachable':
+                    if (statusText) statusText.textContent = 'Connecting to backend service...';
+                    break;
+                default:
+                    if (statusText) statusText.textContent = 'Status: ' + data.unity_status;
+            }
+        } catch (error) {
+            console.error('Status poll error:', error);
+        }
+    }, 3000);
+}
+
+function closeUnityModal() {
+    const modal = document.getElementById('unity-launch-modal');
+    if (modal) modal.remove();
+    const styles = document.getElementById('unity-modal-styles');
+    if (styles) styles.remove();
+    if (statusPollInterval) {
+        clearInterval(statusPollInterval);
+        statusPollInterval = null;
+    }
+}
+
+async function endUnitySession() {
+    if (!currentSessionId) return;
+
+    const elapsed = prompt('Enter session duration in seconds:', '600');
+    if (elapsed === null) return;
+
+    const duration = parseInt(elapsed);
+    if (isNaN(duration) || duration <= 0) {
+        alert('Please enter a valid duration.');
+        return;
+    }
+
     try {
-        await fetch('/api/vr-sessions/end', {
+        const moodResponse = await fetch('/api/user/current-mood', {
+            headers: { 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' }
+        });
+        const moodData = await moodResponse.json();
+        const moodAfter = moodData.mood ? moodData.mood.mood_scale : null;
+
+        const response = await fetch('/api/vr/end-session', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                'X-CSRF-TOKEN': getCsrfToken(),
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                session_id: sessionId,
+                session_id: currentSessionId,
                 session_duration: duration,
                 mood_after: moodAfter,
-                session_quality: quality,
-                notes: notes
+                session_quality: null,
+                notes: 'Ended from web dashboard'
             })
         });
+
+        const data = await response.json();
+        if (data.success) {
+            showSessionFeedback();
+        }
     } catch (error) {
-        console.error('Error ending session tracking:', error);
+        console.error('Error ending session:', error);
+        alert('Error ending session.');
     }
 }
 
-function showVRExperience(assetId, session, sessionData) {
-    const startTime = Date.now();
-    let sessionId = sessionData?.id;
-    const canvas = document.createElement('canvas');
-    canvas.width = 1920;
-    canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
+document.addEventListener('DOMContentLoaded', function () {
+  updateVrAssetsStatus();
+  if (window.VRDetector) {
+    VRDetector.addEventListener(updateVrAssetsStatus);
+  }
+});
 
-    // Simple animated scene based on asset
-    let frame = 0;
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+function updateVrAssetsStatus() {
+  var badge = document.getElementById('vr-assets-status-badge');
+  if (!badge || !window.VRDetector) return;
 
-        // Different scenes based on asset
-        switch(assetId) {
-            case 1: // Forest
-                ctx.fillStyle = '#228B22';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#32CD32';
-                for(let i = 0; i < 50; i++) {
-                    ctx.beginPath();
-                    ctx.arc(Math.sin(frame * 0.01 + i) * 200 + canvas.width/2,
-                           Math.cos(frame * 0.01 + i) * 200 + canvas.height/2,
-                           10, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                break;
-            case 2: // Ocean
-                ctx.fillStyle = '#1e90ff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffffff';
-                for(let i = 0; i < 20; i++) {
-                    ctx.beginPath();
-                    ctx.arc(Math.sin(frame * 0.02 + i) * 300 + canvas.width/2,
-                           canvas.height - 100 + Math.sin(frame * 0.05 + i) * 20,
-                           15, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                break;
-            case 3: // Mountain
-                ctx.fillStyle = '#87CEEB';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#8B4513';
-                ctx.beginPath();
-                ctx.moveTo(0, canvas.height);
-                ctx.lineTo(canvas.width/2, canvas.height/3);
-                ctx.lineTo(canvas.width, canvas.height);
-                ctx.fill();
-                break;
-            case 4: // Breathing
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '48px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('Breathe In...', canvas.width/2, canvas.height/2 - 50);
-                ctx.fillText(Math.floor(Math.sin(frame * 0.05) * 2 + 3) + ' seconds', canvas.width/2, canvas.height/2 + 50);
-                break;
-            case 5: // Stars
-                ctx.fillStyle = '#000011';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffffff';
-                for(let i = 0; i < 100; i++) {
-                    const x = (i * 37) % canvas.width;
-                    const y = (i * 23) % canvas.height;
-                    const brightness = Math.sin(frame * 0.02 + i) * 0.5 + 0.5;
-                    ctx.globalAlpha = brightness;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.globalAlpha = 1;
-                break;
-            case 6: // Zen Garden
-                ctx.fillStyle = '#F5F5DC';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#228B22';
-                // Draw rocks
-                for(let i = 0; i < 15; i++) {
-                    ctx.beginPath();
-                    ctx.ellipse(100 + i * 120, 200 + Math.sin(i) * 100, 30, 20, Math.PI / 4, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                // Draw sand patterns
-                ctx.strokeStyle = '#D2B48C';
-                ctx.lineWidth = 2;
-                for(let i = 0; i < 10; i++) {
-                    ctx.beginPath();
-                    ctx.arc(canvas.width/2, canvas.height/2, 50 + i * 20, 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-                break;
-        }
+  var state = VRDetector.getState();
 
-        frame++;
-        requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    // Show modal with VR content and session controls
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: black; z-index: 9999; display: flex; align-items: center; justify-content: center;
-        flex-direction: column;
-    `;
-    modal.innerHTML = `
-        <div style="text-align: center; color: white; max-width: 600px; padding: 20px;">
-            <h2>VR Experience Active</h2>
-            <p>Put on your VR headset to view the therapeutic scene.</p>
-            <div id="session-timer" style="font-size: 24px; margin: 20px 0;">00:00</div>
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <button id="end-session-btn" onclick="endSession()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 5px; cursor: pointer;">End Session</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    // Session timer
-    let sessionStart = Date.now();
-    const timerElement = modal.querySelector('#session-timer');
-    const timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
-        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-        const seconds = (elapsed % 60).toString().padStart(2, '0');
-        timerElement.textContent = `${minutes}:${seconds}`;
-    }, 1000);
-
-    // End session function
-    window.endSession = async () => {
-        clearInterval(timerInterval);
-        const duration = Math.floor((Date.now() - startTime) / 1000);
-
-        // Show feedback modal
-        showSessionFeedback(sessionId, duration, () => {
-            modal.remove();
-            session.end();
-        });
-    };
-
-    // Auto-end session after max duration (30 minutes)
-    setTimeout(() => {
-        if (modal.parentElement) {
-            endSession();
-        }
-    }, 30 * 60 * 1000);
+  if (state.status === 'connected') {
+    badge.className = 'badge badge--success';
+    badge.textContent = state.headsetName ? state.headsetName + ' Connected' : 'VR Headset Connected';
+  } else if (state.status === 'not-connected') {
+    badge.className = 'badge badge--warning';
+    badge.textContent = 'No Headset Detected — Connect via Link or Air Link';
+  } else if (state.status === 'unsupported') {
+    badge.className = 'badge badge--danger';
+    badge.textContent = 'VR Not Supported — Use a WebXR-enabled browser';
+  } else {
+    badge.className = 'badge badge--neutral';
+    badge.textContent = 'Checking VR connection...';
+  }
 }
 
-function showSessionFeedback(sessionId, duration, callback) {
+function showSessionFeedback() {
+    closeUnityModal();
+
     const feedbackModal = document.createElement('div');
-    feedbackModal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;
-    `;
+    feedbackModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;';
     feedbackModal.innerHTML = `
-        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
-            <h3 style="margin-top: 0;">Session Complete!</h3>
-            <p>Duration: ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}</p>
-
-            <div style="margin: 20px 0;">
-                <label>How was your mood after the session? (1-10)</label><br>
-                <input type="range" id="mood-after" min="1" max="10" value="5" style="width: 100%; margin: 10px 0;">
-                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+        <div style="background:var(--color-surface);padding:1.5rem;border-radius:var(--radius-2xl);max-width:480px;width:90%;">
+            <h3 style="margin-top:0;">Session Complete!</h3>
+            <p style="color:var(--color-text-secondary);margin-bottom:1.25rem;">How was your experience?</p>
+            <div style="margin-bottom:1.25rem;">
+                <label style="font-weight:600;font-size:0.9rem;">Mood after session (1-10)</label>
+                <input type="range" id="mood-after" min="1" max="10" value="5" style="width:100%;margin:0.5rem 0;accent-color:var(--color-primary);">
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--color-text-muted);">
                     <span>1 (Worse)</span>
-                    <span id="mood-value">5</span>
+                    <span id="mood-value" style="font-weight:700;color:var(--color-text);">5</span>
                     <span>10 (Much Better)</span>
                 </div>
             </div>
-
-            <div style="margin: 20px 0;">
-                <label>Session Quality (1-5 stars)</label><br>
-                <div id="star-rating" style="font-size: 24px; margin: 10px 0; cursor: pointer;">
-                    ★☆☆☆☆
-                </div>
+            <div style="margin-bottom:1.25rem;">
+                <label style="font-weight:600;font-size:0.9rem;">Session Quality</label>
+                <div id="star-rating" style="font-size:1.75rem;margin:0.5rem 0;cursor:pointer;color:var(--color-warning);">★★★★★</div>
             </div>
-
-            <div style="margin: 20px 0;">
-                <label>Notes (optional)</label><br>
-                <textarea id="session-notes" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" placeholder="How did you feel during this session?"></textarea>
+            <div style="margin-bottom:1.25rem;">
+                <label style="font-weight:600;font-size:0.9rem;">Notes (optional)</label>
+                <textarea id="session-notes" rows="3" style="width:100%;padding:0.625rem;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);color:var(--color-text);margin-top:0.375rem;" placeholder="How did you feel during this session?"></textarea>
             </div>
-
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="this.closest('div').parentElement.remove()" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer;">Skip</button>
-                <button id="submit-feedback" style="padding: 10px 20px; background: var(--color-primary); color: white; border: none; border-radius: 5px; cursor: pointer;">Submit Feedback</button>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                <button onclick="this.closest('div[style*=\\'position:fixed\\']').remove()" class="btn btn-secondary btn-sm">Skip</button>
+                <button id="submit-feedback-btn" class="btn btn-primary btn-sm">Submit</button>
             </div>
         </div>
     `;
 
     document.body.appendChild(feedbackModal);
 
-    // Mood slider
     const moodSlider = feedbackModal.querySelector('#mood-after');
     const moodValue = feedbackModal.querySelector('#mood-value');
-    moodSlider.addEventListener('input', () => {
-        moodValue.textContent = moodSlider.value;
-    });
+    moodSlider.addEventListener('input', () => { moodValue.textContent = moodSlider.value; });
 
-    // Star rating
-    let currentRating = 3;
+    let currentRating = 5;
     const starRating = feedbackModal.querySelector('#star-rating');
     starRating.addEventListener('click', (e) => {
         const rect = starRating.getBoundingClientRect();
         const x = e.clientX - rect.left;
         currentRating = Math.ceil((x / rect.width) * 5);
-        updateStars();
+        starRating.textContent = '★'.repeat(currentRating) + '☆'.repeat(5 - currentRating);
     });
 
-    function updateStars() {
-        starRating.textContent = '★'.repeat(currentRating) + '☆'.repeat(5 - currentRating);
-    }
-
-    // Submit feedback
-    feedbackModal.querySelector('#submit-feedback').addEventListener('click', async () => {
+    feedbackModal.querySelector('#submit-feedback-btn').addEventListener('click', async () => {
         const moodAfter = parseInt(moodSlider.value);
-        const quality = currentRating;
-        const notes = feedbackModal.querySelector('#session-notes').value;
-
-        await endVRSession(sessionId, duration, moodAfter, quality, notes);
+        try {
+            await fetch('/api/vr-sessions/end', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: currentSessionId,
+                    session_duration: 0,
+                    mood_after: moodAfter,
+                    session_quality: currentRating,
+                    notes: feedbackModal.querySelector('#session-notes').value
+                })
+            });
+        } catch (e) {
+            console.error('Error saving feedback:', e);
+        }
         feedbackModal.remove();
-        callback();
+        alert('Thank you for your feedback!');
     });
 }
 </script>
-
-<style>
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        background: var(--color-surface-muted);
-        color: var(--color-text-muted);
-        border-radius: var(--radius-sm);
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-    .mb-4 { margin-bottom: var(--space-4); }
-    .p-6 { padding: var(--space-6); }
-    .p-4 { padding: var(--space-4); }
-    .grid {
-        display: grid;
-    }
-    .stack {
-        display: flex;
-        flex-direction: column;
-    }
-    .cluster {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-</style>
 @endsection

@@ -60,27 +60,30 @@ function displayNotification(notification) {
         milestone: '🎉',
         streak_warning: '⏰',
         assignment: '👤',
+        vr_session_report: '📋',
         general: 'ℹ️'
     };
     
     element.className = 'notification-toast';
+    element.className = 'notification-toast ' + (notification.severity || 'info');
     element.style.cssText = `
-        background: white;
+        background: var(--color-surface, #ffffff);
         border-left: 4px solid ${colors[notification.severity] || colors.info};
-        border-radius: 0.5rem;
+        border-radius: 0.75rem;
         padding: 1rem;
         margin-bottom: 0.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0,0,0,0.1));
         animation: slideIn 0.3s ease;
         cursor: pointer;
+        border: 1px solid var(--color-border, #e2e8f0);
     `;
     
     element.innerHTML = `
         <div style="display: flex; gap: 0.75rem;">
-            <span style="font-size: 1.25rem;">${icons[notification.type] || icons.general}</span>
-            <div style="flex: 1;">
-                <strong>${notification.title}</strong>
-                <p style="margin: 0.25rem 0 0; color: #6b7280; font-size: 0.875rem;">${notification.message}</p>
+            <span style="font-size: 1.25rem; flex-shrink: 0;">${icons[notification.type] || icons.general}</span>
+            <div style="flex: 1; min-width: 0;">
+                <strong style="font-size: 0.875rem;">${notification.title}</strong>
+                <p style="margin: 0.25rem 0 0; color: var(--color-text-muted, #6b7280); font-size: 0.8rem;">${notification.message}</p>
             </div>
         </div>
     `;

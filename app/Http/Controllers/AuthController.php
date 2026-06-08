@@ -9,10 +9,21 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    private function redirectBasedOnRole()
+    {
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+        if (auth()->user()->isTherapist()) {
+            return redirect()->route('therapist.dashboard');
+        }
+        return redirect()->route('dashboard');
+    }
+
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return $this->redirectBasedOnRole();
         }
         return view('login');
     }
@@ -21,12 +32,12 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required|min:6',
+            'password' => 'required|min:8',
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->route('dashboard')->with('success', 'Welcome back!');
+            return $this->redirectBasedOnRole()->with('success', 'Welcome back!');
         }
 
         return back()
@@ -37,7 +48,7 @@ class AuthController extends Controller
     public function showRegisterChoice()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return $this->redirectBasedOnRole();
         }
         return view('register-choice');
     }
@@ -45,7 +56,7 @@ class AuthController extends Controller
     public function showRegister($type = 'patient')
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return $this->redirectBasedOnRole();
         }
         
         if (!in_array($type, ['patient', 'therapist'])) {
@@ -63,7 +74,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:6|confirmed',
+            'password' => 'required|min:8|confirmed',
             'type' => 'required|in:patient,therapist',
         ]);
 
@@ -100,7 +111,7 @@ class AuthController extends Controller
             ? 'Welcome to Neuro Haven! Your therapist profile is ready.' 
             : 'Account created! Welcome to Neuro Haven.';
 
-        return redirect()->route('dashboard')->with('success', $message);
+        return $this->redirectBasedOnRole()->with('success', $message);
     }
 
     public function logout(Request $request)
@@ -109,6 +120,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/')->with('success', 'Logged out successfully.');
+        return view('auth.logout');
     }
 }

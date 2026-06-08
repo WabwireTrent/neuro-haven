@@ -146,9 +146,14 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    // Time-of-day greeting
+    // Time-of-day greeting — use stored user name if available
     var greetingEl = document.querySelector("[data-dashboard-greeting]");
-    if (greetingEl) greetingEl.textContent = getGreeting() + ", Alex";
+    if (greetingEl) {
+      var storedUser = null;
+      try { storedUser = JSON.parse(localStorage.getItem('nh_user')); } catch (e) {}
+      var displayName = (storedUser && storedUser.name) ? storedUser.name : "there";
+      greetingEl.textContent = getGreeting() + ", " + displayName;
+    }
 
     renderAll();
 

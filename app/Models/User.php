@@ -62,6 +62,28 @@ class User extends Authenticatable
         return $this->hasMany(VRSession::class);
     }
 
+    public function assessmentResults()
+    {
+        return $this->hasMany(AssessmentResult::class);
+    }
+
+    public function treatmentPlans()
+    {
+        return $this->hasMany(TreatmentPlan::class);
+    }
+
+    public function crisisAlerts()
+    {
+        return $this->hasMany(CrisisAlert::class);
+    }
+
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')
+            ->withPivot('earned_at')
+            ->withTimestamps();
+    }
+
     // Therapist relationships
     public function assignedPatients()
     {

@@ -17,10 +17,14 @@ public class NeuroHavenSessionManager : MonoBehaviour
     [Header("Scene Mapping")]
     public string forestSceneName = "ForestScene";
     public string beachSceneName = "BeachScene";
+    public string mountainSceneName = "MountainScene";
+    public string breathingSceneName = "BreathingScene";
 
     [Header("Audio")]
     public AudioClip forestAudio;
     public AudioClip beachAudio;
+    public AudioClip mountainAudio;
+    public AudioClip breathingAudio;
 
     [Header("Fade Transition")]
     [Range(0.1f, 3f)]
@@ -55,10 +59,27 @@ public class NeuroHavenSessionManager : MonoBehaviour
             sessionTimer += Time.deltaTime;
             if (sessionTimer >= currentSession.duration)
             {
-                Debug.Log("[NeuroHaven] Session has ended.");
+                Debug.Log("[NeuroHaven] Session duration reached. Ending session.");
                 currentSession.status = "ended";
                 sessionTimer = currentSession.duration;
+                StartCoroutine(NotifySessionEnded());
             }
+        }
+    }
+
+    private IEnumerator NotifySessionEnded()
+    {
+        var requestUrl = $"{apiBaseUrl.TrimEnd('/')}/end-session";
+        using var request = UnityWebRequest.Get(requestUrl);
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            Debug.Log("[NeuroHaven] Session end notified to backend.");
+        }
+        else
+        {
+            Debug.LogWarning($"[NeuroHaven] Failed to notify session end: {request.error}");
         }
     }
 
@@ -153,6 +174,8 @@ public class NeuroHavenSessionManager : MonoBehaviour
         {
             "forest" => forestSceneName,
             "beach" => beachSceneName,
+            "mountain" => mountainSceneName,
+            "breathing" => breathingSceneName,
             _ => string.Empty,
         };
     }
@@ -166,6 +189,12 @@ public class NeuroHavenSessionManager : MonoBehaviour
                 break;
             case "beach":
                 audioSource.clip = beachAudio;
+                break;
+            case "mountain":
+                audioSource.clip = mountainAudio;
+                break;
+            case "breathing":
+                audioSource.clip = breathingAudio;
                 break;
             default:
                 audioSource.clip = null;
@@ -229,5 +258,8 @@ public class NeuroHavenSessionManager : MonoBehaviour
         public string status;
         public int duration;
         public int remainingSeconds;
+        public string displayName;
+        public int sessionId;
+        public int userId;
     }
 }

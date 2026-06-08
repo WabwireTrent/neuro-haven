@@ -4,208 +4,159 @@
 @section('page', 'patient-details')
 
 @section('content')
-<div class="container">
-    <div class="dashboard-shell">
-        <div class="dashboard-app">
-            <header class="dashboard-header">
-                <div class="dashboard-avatar" aria-hidden="true">👤</div>
-                <div class="dashboard-greeting">
-                    <h1>{{ $patient->name }}</h1>
-                    <p class="dashboard-streak">Patient therapy progress and analytics</p>
-                </div>
-            </header>
-
-            <section class="dashboard-main">
-                <!-- Patient Info -->
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>Patient Information</h2>
-                    </div>
-                    <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
-                        <article class="surface p-4">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Email</p>
-                            <p style="margin: 0.5rem 0 0;">{{ $patient->email }}</p>
-                        </article>
-                        <article class="surface p-4">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Member Since</p>
-                            <p style="margin: 0.5rem 0 0;">{{ $patient->created_at->format('M j, Y') }}</p>
-                        </article>
-                    </div>
-                </section>
-
-                <!-- Mood Statistics -->
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>Mood Analytics</h2>
-                        <span class="dashboard-widget__eyebrow">Patient's emotional patterns</span>
-                    </div>
-                    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Total Moods Logged</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--color-primary);">{{ $moodStats['total_moods'] }}</p>
-                        </article>
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Average Mood</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--color-primary);">{{ $moodStats['avg_mood'] }}/10</p>
-                        </article>
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">This Week</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--color-primary);">{{ $moodStats['week_moods'] }}</p>
-                        </article>
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">This Month</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--color-primary);">{{ $moodStats['month_moods'] }}</p>
-                        </article>
-                    </div>
-                </section>
-
-                <!-- VR Session Statistics -->
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>VR Therapy Sessions</h2>
-                        <span class="dashboard-widget__eyebrow">Session performance</span>
-                    </div>
-                    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Total Sessions</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--color-primary);">{{ $vrStats['total_sessions'] }}</p>
-                        </article>
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Completed</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--color-primary);">{{ $vrStats['completed_sessions'] }}</p>
-                        </article>
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Total Time</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--color-primary);">{{ round($vrStats['total_duration'] / 60) }}m</p>
-                        </article>
-                        <article class="surface p-4" style="text-align: center;">
-                            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Avg Quality</p>
-                            <p style="margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--color-primary);">{{ $vrStats['avg_quality'] }}/5</p>
-                        </article>
-                    </div>
-                </section>
-
-                <!-- Mood Trend -->
-                @if($moodTrend->count() > 0)
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>Mood Trend (Last 14 Days)</h2>
-                        <span class="dashboard-widget__eyebrow">Emotional progression</span>
-                    </div>
-                    <div style="margin-top: 1rem; padding: 1rem; background: var(--color-surface-muted); border-radius: var(--radius-md); overflow-x: auto;">
-                        <div style="display: flex; gap: 1rem; align-items: flex-end; min-height: 150px; padding: 1rem 0;">
-                            @foreach($moodTrend as $entry)
-                                <div style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: flex-end;">
-                                    <div style="background: var(--color-primary); height: {{ ($entry->mood_scale / 10) * 100 }}px; border-radius: var(--radius-sm); margin-bottom: 0.5rem;"></div>
-                                    <p style="margin: 0; font-size: 0.75rem; font-weight: 600;">{{ $entry->mood_date->format('M j') }}</p>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </section>
-                @endif
-
-                <!-- Recent Moods -->
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>Mood History</h2>
-                        <span class="dashboard-widget__eyebrow">Recent entries</span>
-                    </div>
-                    @if($patient->moods->count() > 0)
-                        <div class="stack" style="gap: 1rem; margin-top: 1rem;">
-                            @foreach($patient->moods as $mood)
-                            <article class="surface p-4">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">{{ $mood->mood_date->format('M j, Y g:i A') }}</p>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">
-                                            @php
-                                                $moodEmoji = [1 => '😢', 2 => '😞', 3 => '😐', 4 => '🙂', 5 => '😊', 6 => '😄', 7 => '😄', 8 => '😄', 9 => '😄', 10 => '🤩'];
-                                            @endphp
-                                            {{ $moodEmoji[$mood->mood_scale] ?? '😐' }}
-                                        </div>
-                                        <p style="margin: 0; font-weight: 700; font-size: 1.25rem;">{{ $mood->mood_scale }}/10</p>
-                                    </div>
-                                </div>
-                            </article>
-                            @endforeach
-                        </div>
-                    @else
-                        <p class="text-muted" style="margin-top: 1rem;">No mood entries yet.</p>
-                    @endif
-                </section>
-
-                <!-- Recent VR Sessions -->
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div class="dashboard-widget__head">
-                        <h2>VR Sessions</h2>
-                        <span class="dashboard-widget__eyebrow">Therapy history</span>
-                    </div>
-                    @if($patient->vrSessions->count() > 0)
-                        <div class="stack" style="gap: 1rem; margin-top: 1rem;">
-                            @foreach($patient->vrSessions as $session)
-                            <article class="surface p-4">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                                    <h3 style="margin: 0; font-size: 1.125rem;">{{ $session->vr_asset_title }}</h3>
-                                    <span class="badge">{{ $session->is_completed ? 'Completed' : 'In Progress' }}</span>
-                                </div>
-                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
-                                    <div>
-                                        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Duration</p>
-                                        <p style="margin: 0.25rem 0 0; font-weight: 600;">{{ $session->session_duration ? round($session->session_duration / 60, 1) . 'm' : 'N/A' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Quality</p>
-                                        <p style="margin: 0.25rem 0 0; font-weight: 600;">{{ $session->session_quality ? $session->session_quality . '/5' : 'N/A' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Date</p>
-                                        <p style="margin: 0.25rem 0 0; font-weight: 600;">{{ $session->started_at->format('M j') }}</p>
-                                    </div>
-                                </div>
-                            </article>
-                            @endforeach
-                        </div>
-                    @else
-                        <p class="text-muted" style="margin-top: 1rem;">No VR sessions yet.</p>
-                    @endif
-                </section>
-
-                <!-- Back Button -->
-                <section class="card dashboard-widget p-6 mb-4">
-                    <div style="text-align: center;">
-                        <a href="{{ route('therapist.patients') }}" class="btn btn-secondary">Back to Patients</a>
-                    </div>
-                </section>
-            </section>
-        </div>
-    </div>
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>{{ $patient->name }}</h1>
+    <p>{{ $patient->email }} &middot; Member since {{ $patient->created_at->format('M j, Y') }}</p>
+  </div>
+  <div class="page-header__actions">
+    <a href="{{ route('therapist.patients') }}" class="btn btn-secondary btn-sm">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      All Patients
+    </a>
+    <a href="{{ route('therapist.dashboard') }}" class="btn btn-ghost btn-sm">Dashboard</a>
+  </div>
 </div>
 
-<style>
-    .mb-4 { margin-bottom: var(--space-4); }
-    .p-6 { padding: var(--space-6); }
-    .p-4 { padding: var(--space-4); }
-    .grid {
-        display: grid;
-    }
-    .stack {
-        display: flex;
-        flex-direction: column;
-    }
-    .text-muted {
-        color: var(--color-text-muted);
-    }
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        background: var(--color-surface-muted);
-        color: var(--color-text-muted);
-        border-radius: var(--radius-sm);
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-</style>
+<div class="stats-grid" style="margin-bottom: 1.5rem;">
+  <div class="stat-card" style="text-align: center;">
+    <p class="stat-card__label">Total Moods</p>
+    <p class="stat-card__value">{{ $moodStats['total_moods'] }}</p>
+  </div>
+  <div class="stat-card" style="text-align: center;">
+    <p class="stat-card__label">Average Mood</p>
+    <p class="stat-card__value">{{ $moodStats['avg_mood'] }}/10</p>
+  </div>
+  <div class="stat-card" style="text-align: center;">
+    <p class="stat-card__label">VR Sessions</p>
+    <p class="stat-card__value">{{ $vrStats['total_sessions'] }}</p>
+  </div>
+  <div class="stat-card" style="text-align: center;">
+    <p class="stat-card__label">Completed</p>
+    <p class="stat-card__value">{{ $vrStats['completed_sessions'] }}</p>
+  </div>
+</div>
+
+<div class="widget-grid">
+  <div>
+    <div class="card" style="margin-bottom: 1.25rem;">
+      <div class="card-header">
+        <h4 class="card-header__title">Mood Analytics</h4>
+        <span class="badge badge--secondary">Last 30 days</span>
+      </div>
+      <div class="card-body">
+        <div class="kpi-grid" style="margin-bottom: 0;">
+          <div class="kpi-card" style="margin: 0;">
+            <div class="kpi-card__value">{{ $moodStats['total_moods'] }}</div>
+            <div class="kpi-card__label">Total Moods</div>
+          </div>
+          <div class="kpi-card" style="margin: 0;">
+            <div class="kpi-card__value">{{ round($moodStats['avg_mood'], 1) }}</div>
+            <div class="kpi-card__label">Average Mood</div>
+          </div>
+          <div class="kpi-card" style="margin: 0;">
+            <div class="kpi-card__value">{{ $moodStats['week_moods'] }}</div>
+            <div class="kpi-card__label">This Week</div>
+          </div>
+          <div class="kpi-card" style="margin: 0;">
+            <div class="kpi-card__value">{{ $moodStats['month_moods'] }}</div>
+            <div class="kpi-card__label">This Month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if($patient->moods->count() > 0)
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <div class="card-header">
+          <h4 class="card-header__title">Recent Mood Entries</h4>
+        </div>
+        <div class="card-body">
+          <div class="activity-list">
+            @foreach($patient->moods->take(10) as $mood)
+              <div class="activity-item">
+                <div class="activity-item__icon" style="background:var(--color-primary-soft);color:var(--color-primary);font-size:1.1rem;">
+                  @php $moodEmoji = [1=>'😢',2=>'😞',3=>'😐',4=>'🙂',5=>'😊',6=>'😄',7=>'😄',8=>'😄',9=>'😄',10=>'🤩']; @endphp
+                  {{ $moodEmoji[$mood->mood_scale] ?? '😐' }}
+                </div>
+                <div class="activity-item__content">
+                  <p class="activity-item__text">{{ ucfirst($mood->mood) }} &mdash; {{ $mood->mood_scale }}/10</p>
+                  <p class="activity-item__time">{{ $mood->mood_date->format('M j, Y') }} &middot; {{ $mood->created_at->diffForHumans() }}</p>
+                  @if($mood->note)
+                    <div style="margin: 0.375rem 0 0; padding: 0.5rem; background: var(--color-surface-muted); border-radius: var(--radius-md); font-size: 0.8rem; color: var(--color-text); border-left: 3px solid var(--color-primary);">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.25rem; opacity: 0.6;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      {{ $mood->note }}
+                    </div>
+                  @endif
+                </div>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      </div>
+    @endif
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom: 1.25rem;">
+      <div class="card-header">
+        <h4 class="card-header__title">VR Therapy</h4>
+        <span class="badge badge--secondary">{{ $vrStats['completed_sessions'] }} completed</span>
+      </div>
+      <div class="card-body">
+        <div class="kpi-grid" style="margin-bottom: 0;">
+          <div class="kpi-card" style="margin: 0;">
+            <div class="kpi-card__value">{{ $vrStats['total_sessions'] }}</div>
+            <div class="kpi-card__label">Total Sessions</div>
+          </div>
+          <div class="kpi-card" style="margin: 0;">
+            <div class="kpi-card__value">{{ round($vrStats['total_duration'] / 60, 1) }}m</div>
+            <div class="kpi-card__label">Total Time</div>
+          </div>
+          <div class="kpi-card" style="margin: 0;">
+            <div class="kpi-card__value">{{ round($vrStats['avg_quality'], 1) }}</div>
+            <div class="kpi-card__label">Avg Quality</div>
+          </div>
+          <div class="kpi-card" style="margin: 0;">
+            <div class="kpi-card__value">{{ $vrStats['completed_sessions'] }}</div>
+            <div class="kpi-card__label">Completed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if($patient->vrSessions->count() > 0)
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <div class="card-header">
+          <h4 class="card-header__title">Recent VR Sessions</h4>
+        </div>
+        <div class="card-body">
+          <div class="activity-list">
+            @foreach($patient->vrSessions->take(10) as $session)
+              <a href="{{ route('therapist.vr-session.report', $session) }}" class="activity-item" style="text-decoration: none; color: inherit;">
+                <div class="activity-item__icon" style="background:var(--color-secondary-soft);color:var(--color-secondary);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="activity-item__content">
+                  <p class="activity-item__text">{{ $session->vr_asset_title }}</p>
+                  <p class="activity-item__time">
+                    {{ $session->session_duration ? round($session->session_duration/60,1).'m' : 'N/A' }} &middot;
+                    {{ $session->session_quality ? $session->session_quality.'/5' : 'N/A' }} &middot;
+                    {{ $session->started_at->diffForHumans() }}
+                  </p>
+                </div>
+                <div class="activity-item__action" style="display:flex;align-items:center;gap:0.375rem;">
+                  <span class="badge badge--{{ $session->is_completed ? 'success' : 'warning' }}">{{ $session->is_completed ? 'Done' : 'Active' }}</span>
+                  @if($session->is_completed)
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  @endif
+                </div>
+              </a>
+            @endforeach
+          </div>
+        </div>
+      </div>
+    @endif
+  </div>
+</div>
 @endsection

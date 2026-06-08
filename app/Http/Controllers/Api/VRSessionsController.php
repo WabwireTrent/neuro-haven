@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\VRSession;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class VRSessionsController extends Controller
@@ -11,8 +12,8 @@ class VRSessionsController extends Controller
     public function start(Request $request)
     {
         $request->validate([
-            'vr_asset_id' => 'required|integer',
-            'vr_asset_title' => 'required|string',
+            'vr_asset_id' => 'nullable|integer',
+            'vr_asset_title' => 'nullable|string',
             'mood_before' => 'nullable|integer|min:1|max:10',
             'device_type' => 'required|string'
         ]);
@@ -20,7 +21,7 @@ class VRSessionsController extends Controller
         $session = VRSession::create([
             'user_id' => auth()->id(),
             'vr_asset_id' => $request->vr_asset_id,
-            'vr_asset_title' => $request->vr_asset_title,
+            'vr_asset_title' => $request->vr_asset_title ?? 'Guided Session',
             'started_at' => now(),
             'mood_before' => $request->mood_before,
             'device_type' => $request->device_type
@@ -51,7 +52,23 @@ class VRSessionsController extends Controller
             'notes' => $request->notes
         ]);
 
-        return response()->json(['success' => true]);
+        $this->notifyTherapist($session);
+
+        return response()->json(['success' => true, 'session' => $session->fresh()]);
+    }
+
+    private function notifyTherapist(VRSession $session): void
+    {
+        try {
+            $patient = auth()->user();
+            $notifier = app(NotificationService::class);
+            $therapist = $notifier->getPatientTherapist($patient);
+            if ($therapist) {
+                $notifier->notifyVRSessionReport($therapist, $patient, $session);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to notify therapist: ' . $e->getMessage());
+        }
     }
 
     public function getCurrentMood()

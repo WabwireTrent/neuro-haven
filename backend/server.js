@@ -11,7 +11,14 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 3000;
-const ALLOWED_SCENES = ['forest', 'beach'];
+const ALLOWED_SCENES = ['forest', 'beach', 'mountain', 'breathing'];
+
+const SCENE_DISPLAY_NAMES = {
+  forest: 'Peaceful Forest Walk',
+  beach: 'Ocean Meditation',
+  mountain: 'Mountain View Therapy',
+  breathing: 'Guided Breathing Exercise',
+};
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const STORE_FILE = path.join(__dirname, 'session-store.json');
 
@@ -21,6 +28,10 @@ const connectedClients = new Map(); // Map<userId, Set<WebSocket>>
 // WebSocket connection handling
 wss.on('connection', (ws) => {
   console.log('[WebSocket] New client connected');
+
+  // Set up a ping interval to detect dead connections
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
 
   ws.on('message', (message) => {
     try {
@@ -34,10 +45,16 @@ wss.on('connection', (ws) => {
         connectedClients.get(userId).add(ws);
         console.log(`[WebSocket] User ${userId} authenticated`);
         ws.userId = userId;
+        // Acknowledge auth
+        ws.send(JSON.stringify({ type: 'auth_ack', status: 'ok' }));
       }
     } catch (error) {
       console.error('[WebSocket] Failed to parse message:', error);
     }
+  });
+
+  ws.on('error', (error) => {
+    console.error('[WebSocket] Client error:', error.message);
   });
 
   ws.on('close', () => {
@@ -45,10 +62,29 @@ wss.on('connection', (ws) => {
       const clients = connectedClients.get(ws.userId);
       if (clients) {
         clients.delete(ws);
+        if (clients.size === 0) {
+          connectedClients.delete(ws.userId);
+        }
       }
     }
     console.log('[WebSocket] Client disconnected');
   });
+});
+
+// Heartbeat interval — remove dead connections every 30 seconds
+const heartbeatInterval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (!ws.isAlive) {
+      console.log('[WebSocket] Terminating dead connection');
+      return ws.terminate();
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
+wss.on('close', () => {
+  clearInterval(heartbeatInterval);
 });
 
 // Broadcast notification to a specific user
@@ -91,7 +127,7 @@ app.use(cors());
 app.use(express.json());
 
 app.post('/start-session', async (req, res) => {
-  const { scene, duration } = req.body;
+  const { scene, duration, session_id, user_id } = req.body;
 
   if (!scene || typeof scene !== 'string') {
     return res.status(400).json({ error: 'scene is required and must be a string.' });
@@ -116,6 +152,9 @@ app.post('/start-session', async (req, res) => {
     status: 'start',
     duration,
     startedAt: Date.now(),
+    sessionId: session_id || null,
+    userId: user_id || null,
+    displayName: SCENE_DISPLAY_NAMES[scene] || scene,
   };
 
   await saveSessionToFile();
@@ -132,6 +171,10 @@ app.get('/current-session', (req, res) => {
       scene: null,
       status: 'idle',
       duration: 0,
+      remainingSeconds: 0,
+      displayName: null,
+      sessionId: null,
+      userId: null,
     });
   }
 
@@ -152,6 +195,9 @@ app.get('/current-session', (req, res) => {
     status,
     duration: currentSession.duration,
     remainingSeconds: remaining,
+    displayName: currentSession.displayName || currentSession.scene,
+    sessionId: currentSession.sessionId || null,
+    userId: currentSession.userId || null,
   });
 });
 
@@ -207,6 +253,23 @@ app.get('/end-session', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('[backend] Unexpected error:', err);
   return res.status(500).json({ error: 'Internal server error.' });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('[backend] SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('[backend] HTTP server closed.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('[backend] SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('[backend] HTTP server closed.');
+    process.exit(0);
+  });
 });
 
 await loadSessionFromFile();

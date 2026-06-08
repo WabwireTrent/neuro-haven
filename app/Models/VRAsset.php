@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
-#[Fillable(['title', 'description', 'category', 'duration_minutes', 'image_path', 'file_path', 'file_type', 'difficulty_level', 'therapeutic_benefits', 'is_active', 'average_rating'])]
+#[Fillable(['title', 'description', 'category', 'duration_minutes', 'image_path', 'file_path', 'file_type', 'difficulty_level', 'therapeutic_benefits', 'is_active', 'usage_count', 'average_rating'])]
 class VRAsset extends Model
 {
     protected $casts = [

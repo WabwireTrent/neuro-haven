@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'backend' => [
+        'url' => env('BACKEND_URL', 'http://localhost:3000'),
+    ],
+
+    'unity' => [
+        'executable_path' => env('UNITY_EXECUTABLE_PATH', ''),
+        'scenes' => [
+            'forest' => env('UNITY_SCENE_FOREST', 'ForestScene'),
+            'beach' => env('UNITY_SCENE_BEACH', 'BeachScene'),
+            'mountain' => env('UNITY_SCENE_MOUNTAIN', 'MountainScene'),
+            'breathing' => env('UNITY_SCENE_BREATHING', 'BreathingScene'),
+        ],
+    ],
+
 ];

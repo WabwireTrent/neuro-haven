@@ -3,14 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mood;
+use App\Models\User;
+use App\Models\TherapistPatientAssignment;
 use App\Models\VRSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class NeuroController extends Controller
 {
     public function dashboard()
     {
-        $userId = auth()->id();
+        $user = auth()->user();
+        if ($user->isTherapist()) {
+            return redirect()->route('therapist.dashboard');
+        }
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+        $userId = $user->id;
         
         // Get this week's moods
         $weekMoods = Mood::forUser($userId)->thisWeek()->get();
@@ -87,6 +97,20 @@ class NeuroController extends Controller
     public function settings()
     {
         return view('settings');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|current_password',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully.');
     }
 
     public function onboarding()
@@ -225,5 +249,47 @@ class NeuroController extends Controller
         ];
 
         return view('vr-analytics', compact('analytics'));
+    }
+
+    public function therapistSelection()
+    {
+        $user = auth()->user();
+        $myTherapist = $user->assignedTherapists()->first();
+
+        $therapists = User::where('role', 'therapist')
+            ->orderBy('name')
+            ->get();
+
+        return view('patient.therapist-selection', compact('myTherapist', 'therapists'));
+    }
+
+    public function selectTherapist(Request $request)
+    {
+        $request->validate([
+            'therapist_id' => 'required|exists:users,id',
+        ]);
+
+        $user = auth()->user();
+        $therapist = User::findOrFail($request->therapist_id);
+
+        if ($therapist->role !== 'therapist') {
+            return back()->withErrors(['therapist_id' => 'Selected user is not a therapist.']);
+        }
+
+        // Remove all existing active assignments for this patient
+        TherapistPatientAssignment::where('patient_id', $user->id)
+            ->where('status', 'active')
+            ->update(['status' => 'inactive']);
+
+        // Create new assignment
+        TherapistPatientAssignment::create([
+            'therapist_id' => $therapist->id,
+            'patient_id' => $user->id,
+            'status' => 'active',
+            'assigned_at' => now(),
+        ]);
+
+        return redirect()->route('patient.therapist')
+            ->with('success', "Dr. {$therapist->name} is now your therapist.");
     }
 }

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Mood;
 use App\Models\VRSession;
+use App\Models\VRAsset;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TherapistController extends Controller
 {
@@ -86,6 +88,9 @@ class TherapistController extends Controller
     public function patients()
     {
         $patients = User::where('role', 'patient')
+            ->whereHas('assignedTherapists', function ($query) {
+                $query->where('therapist_id', auth()->id());
+            })
             ->withCount(['moods', 'vrSessions'])
             ->with(['moods' => function ($query) {
                 $query->latest()->take(1);
@@ -95,10 +100,64 @@ class TherapistController extends Controller
         return view('therapist.patients', compact('patients'));
     }
 
+    public function reports(Request $request)
+    {
+        $assignedPatientIds = User::where('role', 'patient')
+            ->whereHas('assignedTherapists', function ($query) {
+                $query->where('therapist_id', auth()->id());
+            })
+            ->pluck('id');
+
+        $query = User::whereIn('id', $assignedPatientIds)
+            ->select([
+                'users.*',
+                DB::raw('(SELECT COUNT(*) FROM moods WHERE moods.user_id = users.id) as moods_count'),
+                DB::raw('(SELECT ROUND(AVG(mood_scale), 1) FROM moods WHERE moods.user_id = users.id) as avg_mood'),
+                DB::raw('(SELECT COUNT(*) FROM vr_sessions WHERE vr_sessions.user_id = users.id) as sessions_count'),
+                DB::raw('(SELECT MAX(started_at) FROM vr_sessions WHERE vr_sessions.user_id = users.id) as last_session_at'),
+                DB::raw('(SELECT COUNT(*) FROM vr_sessions WHERE vr_sessions.user_id = users.id AND vr_sessions.completed_at IS NOT NULL) as completed_sessions'),
+            ]);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $sort = $request->input('sort', 'name');
+        $dir = $request->input('dir', 'asc');
+        $allowed = ['name', 'moods_count', 'avg_mood', 'sessions_count', 'completed_sessions', 'last_session_at', 'created_at'];
+        if (in_array($sort, $allowed)) {
+            $query->orderBy($sort, $dir === 'desc' ? 'desc' : 'asc');
+        }
+
+        $patients = $query->paginate(25)->withQueryString();
+
+        $summary = [
+            'total' => $assignedPatientIds->count(),
+            'total_moods' => Mood::whereIn('user_id', $assignedPatientIds)->count(),
+            'total_sessions' => VRSession::whereIn('user_id', $assignedPatientIds)->count(),
+            'avg_mood_all' => round(Mood::whereIn('user_id', $assignedPatientIds)->avg('mood_scale') ?? 0, 1),
+        ];
+
+        return view('therapist.reports', compact('patients', 'summary', 'sort', 'dir'));
+    }
+
     public function patientDetails(User $patient)
     {
         if ($patient->role !== 'patient') {
             abort(403, 'Only patient data can be viewed.');
+        }
+
+        // Verify this therapist is actually assigned to this patient
+        $therapistId = auth()->id();
+        $isAssigned = $patient->assignedTherapists()
+            ->where('therapist_id', $therapistId)
+            ->exists();
+
+        if (!$isAssigned) {
+            abort(403, 'You are not assigned to this patient.');
         }
 
         $patient->load([
@@ -130,5 +189,55 @@ class TherapistController extends Controller
             ->get(['mood_date', 'mood_scale']);
 
         return view('therapist.patient-details', compact('patient', 'moodStats', 'vrStats', 'moodTrend'));
+    }
+
+    public function vrSessionReport(VRSession $vrSession)
+    {
+        $patient = $vrSession->user;
+        if ($patient->role !== 'patient') abort(403);
+
+        $therapistId = auth()->id();
+        $isAssigned = $patient->assignedTherapists()
+            ->where('therapist_id', $therapistId)
+            ->exists();
+        if (!$isAssigned) abort(403, 'You are not assigned to this patient.');
+
+        $patient->loadCount(['moods', 'vrSessions']);
+
+        $recentMoodTrend = $patient->moods()
+            ->orderBy('mood_date')
+            ->take(14)
+            ->get(['mood_date', 'mood_scale']);
+
+        $asset = null;
+        if ($vrSession->vr_asset_id) {
+            $asset = VRAsset::find($vrSession->vr_asset_id);
+        }
+
+        $avgMood = round($patient->moods()->avg('mood_scale') ?? 0, 1);
+        $prevSessions = VRSession::forUser($patient->id)
+            ->where('id', '!=', $vrSession->id)
+            ->completed()
+            ->count();
+        $totalDuration = VRSession::forUser($patient->id)
+            ->completed()
+            ->sum('session_duration') ?? 0;
+        $avgQuality = round(VRSession::forUser($patient->id)
+            ->whereNotNull('session_quality')
+            ->avg('session_quality') ?? 0, 1);
+
+        $reportData = [
+            'session' => $vrSession,
+            'patient' => $patient,
+            'asset' => $asset,
+            'mood_trend' => $recentMoodTrend,
+            'avg_mood' => $avgMood,
+            'prev_completed' => $prevSessions,
+            'total_duration_all' => $totalDuration,
+            'avg_quality_all' => $avgQuality,
+            'streak' => $patient->getCurrentStreak() ?? 0,
+        ];
+
+        return view('therapist.vr-session-report', $reportData);
     }
 }
