@@ -270,6 +270,15 @@ function launchSession() {
   var duration = durationInput ? parseInt(durationInput.value) : 5;
   var device = deviceInput ? deviceInput.value : 'vr';
 
+  // Check VR headset if VR device is selected
+  if (device === 'vr' && window.VRDetector) {
+    var state = VRDetector.getState();
+    if (state.status === 'not-connected' || state.status === 'unsupported') {
+      showSessionHeadsetWarning(state);
+      return;
+    }
+  }
+
   localStorage.setItem('nh_session_duration', duration);
   localStorage.setItem('nh_session_device', device);
 
@@ -331,6 +340,42 @@ function startSessionTimer(seconds) {
   }
   updateTimer();
   timerInterval = setInterval(updateTimer, 1000);
+}
+
+function showSessionHeadsetWarning(state) {
+    var existing = document.getElementById('headset-warning-modal');
+    if (existing) existing.remove();
+
+    var isUnsupported = state.status === 'unsupported';
+
+    var warning = document.createElement('div');
+    warning.id = 'headset-warning-modal';
+    warning.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+    warning.innerHTML = `
+        <div style="background:var(--color-surface);border-radius:var(--radius-2xl);padding:2rem;max-width:480px;width:90%;text-align:center;">
+            <div style="font-size:3.5rem;margin-bottom:1rem;">${isUnsupported ? '🚫' : '🖥️'}</div>
+            <h3 style="margin:0 0 0.5rem;">${isUnsupported ? 'VR Not Supported' : 'Headset Not Detected'}</h3>
+            <p style="color:var(--color-text-secondary);margin:0 0 1.5rem;">
+                ${isUnsupported
+                    ? 'Your browser does not support WebXR. Please use a WebXR-enabled browser.'
+                    : 'We could not detect your VR headset. Please ensure it is connected and powered on, then try again.'
+                }
+            </p>
+            <div style="padding:1rem;background:var(--color-surface-muted);border-radius:var(--radius-xl);margin-bottom:1.5rem;text-align:left;">
+                <p style="font-weight:600;margin:0 0 0.5rem;font-size:0.85rem;">Quick tips:</p>
+                <ul style="margin:0;padding-left:1.25rem;font-size:0.8rem;color:var(--color-text-secondary);display:flex;flex-direction:column;gap:0.25rem;">
+                    <li>Connect your headset via USB Link cable or Air Link</li>
+                    <li>Make sure the headset is powered on</li>
+                    <li>Enable Oculus Link from the headset menu</li>
+                    <li>Restart the Oculus app on your PC</li>
+                </ul>
+            </div>
+            <button onclick="document.getElementById('headset-warning-modal').remove()" class="btn btn-primary">OK</button>
+        </div>
+    `;
+
+    document.body.appendChild(warning);
 }
 
 function endSession() {

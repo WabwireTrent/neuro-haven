@@ -57,7 +57,10 @@
               </p>
               <p class="activity-item__time">{{ $result->completed_at->format('M j, Y g:i A') }}</p>
             </div>
-            <div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <a href="{{ route('assessments.report', $result) }}" class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:0.25rem 0.5rem;" title="View Report">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </a>
               <span class="badge badge--{{ $result->severity === 'none' ? 'success' : ($result->severity === 'mild' ? 'warning' : 'danger') }}">
                 {{ ucfirst($result->severity) }}
               </span>

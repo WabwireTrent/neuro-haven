@@ -33,7 +33,10 @@
             <td>{{ $result->score }}/{{ $result->assessment_type === 'phq-9' ? 27 : 21 }}</td>
             <td><span class="badge badge--{{ $result->severity === 'none' ? 'success' : ($result->severity === 'mild' ? 'warning' : 'danger') }}">{{ ucfirst($result->severity) }}</span></td>
             <td class="text-sm text-muted">{{ $result->completed_at->format('M j, Y g:i A') }}</td>
-            <td class="actions-cell"><a href="{{ route('assessments.results', $result->assessment_type) }}" class="btn btn-ghost btn-sm">View</a></td>
+            <td class="actions-cell" style="display:flex;gap:0.35rem;">
+              <a href="{{ route('assessments.report', $result) }}" class="btn btn-ghost btn-sm" title="Report">Report</a>
+              <a href="{{ route('assessments.results', $result->assessment_type) }}" class="btn btn-ghost btn-sm">History</a>
+            </td>
           </tr>
         @empty
           <tr><td colspan="5" class="empty-cell">No assessments completed yet.</td></tr>

@@ -104,6 +104,27 @@ function getCsrfToken() {
 async function launchUnityVR(assetId) {
     const btn = event.target.closest('button');
     const originalText = btn.innerHTML;
+
+    // Check VR headset connection before launching
+    if (window.VRDetector) {
+        const state = VRDetector.getState();
+        if (state.status === 'not-connected' || state.status === 'unsupported') {
+            showHeadsetWarning(state);
+            return;
+        }
+        if (state.status === 'unknown') {
+            try {
+                const result = await VRDetector.detect();
+                if (!result.connected) {
+                    showHeadsetWarning(result);
+                    return;
+                }
+            } catch (e) {
+                // proceed anyway if detection fails
+            }
+        }
+    }
+
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Launching...';
 
@@ -157,14 +178,24 @@ function showUnityLaunchModal(data) {
     modal.id = 'unity-launch-modal';
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
 
+    var headsetState = window.VRDetector ? VRDetector.getState() : { status: 'unknown', headsetName: null };
+    var headsetIcon = headsetState.connected ? '✅' : '⚠️';
+    var headsetLabel = headsetState.connected
+        ? (headsetState.headsetName || 'VR Headset') + ' Connected'
+        : 'No VR Headset Detected';
+    var headsetClass = headsetState.connected ? 'badge--success' : 'badge--warning';
+
     modal.innerHTML = `
         <div style="background:var(--color-surface);border-radius:var(--radius-2xl);padding:2rem;max-width:520px;width:90%;text-align:center;">
             <div style="font-size:3rem;margin-bottom:1rem;">🎮</div>
             <h3 style="margin:0 0 0.5rem;">Launching VR Experience</h3>
-            <p style="color:var(--color-text-secondary);margin:0 0 1.5rem;">
-                The Unity VR application is starting on your PC. 
-                Put on your Meta Quest headset and ensure it is connected via Link cable or Air Link.
-            </p>
+            <div id="headset-status-banner" style="margin-bottom:1.25rem;padding:0.75rem 1rem;border-radius:var(--radius-lg);background:${headsetState.connected ? 'rgba(34,197,94,0.1)' : 'rgba(250,204,21,0.1)'};border:1px solid ${headsetState.connected ? 'rgba(34,197,94,0.3)' : 'rgba(250,204,21,0.3)'};display:flex;align-items:center;gap:0.75rem;">
+                <span style="font-size:1.5rem;">${headsetIcon}</span>
+                <div style="flex:1;text-align:left;">
+                    <p style="font-weight:600;margin:0;font-size:0.9rem;color:${headsetState.connected ? '#22c55e' : '#ca8a04'};">${headsetLabel}</p>
+                    <p style="margin:0.125rem 0 0;font-size:0.8rem;color:var(--color-text-muted);">${headsetState.connected ? 'You are ready to start your session.' : 'Connect your VR headset via Link cable or Air Link.'}</p>
+                </div>
+            </div>
             <div id="launch-status" style="margin-bottom:1.5rem;">
                 <div style="display:flex;align-items:center;gap:0.75rem;justify-content:center;">
                     <div class="spinner" style="width:20px;height:20px;border:3px solid var(--color-border);border-top-color:var(--color-primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
@@ -275,6 +306,62 @@ function startStatusPolling(sessionId) {
             console.error('Status poll error:', error);
         }
     }, 3000);
+}
+
+function showHeadsetWarning(state) {
+    var existing = document.getElementById('headset-warning-modal');
+    if (existing) existing.remove();
+
+    var name = state.headsetName || 'VR headset';
+    var isUnsupported = state.status === 'unsupported';
+
+    var warning = document.createElement('div');
+    warning.id = 'headset-warning-modal';
+    warning.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+    warning.innerHTML = `
+        <div style="background:var(--color-surface);border-radius:var(--radius-2xl);padding:2rem;max-width:480px;width:90%;text-align:center;">
+            <div style="font-size:3.5rem;margin-bottom:1rem;">${isUnsupported ? '🚫' : '🖥️'}</div>
+            <h3 style="margin:0 0 0.5rem;">${isUnsupported ? 'VR Not Supported' : 'Headset Not Detected'}</h3>
+            <p style="color:var(--color-text-secondary);margin:0 0 1.5rem;">
+                ${isUnsupported
+                    ? 'Your browser does not support WebXR. Please use a WebXR-enabled browser like Meta Quest Browser, Chrome, or Edge.'
+                    : 'We could not detect your VR headset. Please ensure it is connected and powered on, then try again.'
+                }
+            </p>
+            <div style="padding:1rem;background:var(--color-surface-muted);border-radius:var(--radius-xl);margin-bottom:1.5rem;text-align:left;">
+                <p style="font-weight:600;margin:0 0 0.5rem;font-size:0.85rem;">Quick tips:</p>
+                <ul style="margin:0;padding-left:1.25rem;font-size:0.8rem;color:var(--color-text-secondary);display:flex;flex-direction:column;gap:0.25rem;">
+                    <li>Connect your headset via USB Link cable or Air Link</li>
+                    <li>Make sure the headset is powered on</li>
+                    <li>Enable Oculus Link from the headset menu</li>
+                    <li>Restart the Oculus app on your PC</li>
+                </ul>
+            </div>
+            <div style="display:flex;gap:0.5rem;justify-content:center;">
+                <button onclick="document.getElementById('headset-warning-modal').remove()" class="btn btn-secondary">Cancel</button>
+                <button onclick="retryLaunch()" class="btn btn-primary">Try Again</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(warning);
+}
+
+function retryLaunch() {
+    var warning = document.getElementById('headset-warning-modal');
+    if (warning) warning.remove();
+
+    if (window.VRDetector) {
+        VRDetector.detect().then(function (state) {
+            if (state.connected) {
+                var btn = document.querySelector('[onclick*="launchUnityVR"]');
+                if (btn) btn.click();
+            } else {
+                showHeadsetWarning(state);
+            }
+        });
+    }
 }
 
 function closeUnityModal() {

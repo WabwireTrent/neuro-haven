@@ -3,7 +3,7 @@
 @section('title', 'Wellness Assessment')
 @section('page', 'onboarding')
 
-@section('content')
+@section('auth_content')
 <main class="onboarding-shell">
   <div class="onboarding-app">
     <header class="onboarding-head">

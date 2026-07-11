@@ -14,6 +14,18 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
       Log Mood
     </a>
+    <form action="{{ route('export.mood-report') }}" method="GET" style="display:inline-flex;gap:0.25rem;align-items:center;">
+      <select name="days" class="form-select form-select-sm" style="font-size:0.7rem;padding:0.2rem 0.4rem;width:auto;border:1px solid #d1d5db;border-radius:4px;background:#fff;">
+        <option value="7">7 days</option>
+        <option value="30">30 days</option>
+        <option value="90" selected>90 days</option>
+        <option value="365">1 year</option>
+      </select>
+      <button type="submit" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:0.25rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export PDF
+      </button>
+    </form>
     <a href="{{ route('session') }}" class="btn btn-primary">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       New Session
@@ -156,29 +168,16 @@
     <div class="card" style="margin-bottom: 1.25rem;">
       <div class="card-header">
         <h4 class="card-header__title">Mood This Week</h4>
-        <div class="card-header__action">
+        <div class="card-header__action" style="display:flex;gap:0.5rem;align-items:center;">
+          <button onclick="toggleChartType()" class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:0.25rem 0.5rem;" title="Toggle chart type">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="9" y1="21" x2="9" y2="8"/><line x1="14" y1="21" x2="14" y2="10"/><line x1="19" y1="21" x2="19" y2="3"/></svg>
+          </button>
           <span class="badge badge--neutral">Mon - Sun</span>
         </div>
       </div>
       <div class="card-body">
-        <div class="chart-container" style="height: 180px;">
-          <div class="chart-placeholder" data-dashboard-chart>
-            @php
-              $weekMoods = Auth::user()->moods()->whereBetween('mood_date', [now()->startOfWeek(), now()->endOfWeek()])->get()->keyBy(function($m) { return $m->mood_date->format('w'); });
-              $days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            @endphp
-            @foreach (range(1, 7) as $day)
-              @php
-                $dayOfWeek = $day % 7;
-                $mood = $weekMoods->get((string)$dayOfWeek);
-                $height = $mood ? ($mood->mood_scale / 10) * 100 : 0;
-              @endphp
-              <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0.375rem;">
-                <div class="chart-bar" style="height: {{ max($height, 4) }}%; width: 100%; max-width: 28px;"></div>
-                <span style="font-size: 0.6rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase;">{{ $days[$day-1] }}</span>
-              </div>
-            @endforeach
-          </div>
+        <div class="chart-container" style="height: 220px; position: relative;">
+          <canvas id="weeklyMoodChart"></canvas>
         </div>
       </div>
     </div>
@@ -231,10 +230,11 @@
           <div>
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.375rem;">
               <span style="font-size: 0.8rem; font-weight: 500;">Mood Consistency</span>
-              <span style="font-size: 0.8rem; font-weight: 700;">{{ round(($weekMoods->count() / 7) * 100) }}%</span>
+              @php $weekMoodCount = Auth::user()->moods()->whereBetween('mood_date', [now()->startOfWeek(), now()->endOfWeek()])->count(); @endphp
+              <span style="font-size: 0.8rem; font-weight: 700;">{{ round(($weekMoodCount / 7) * 100) }}%</span>
             </div>
             <div class="progress progress--sm">
-              <div class="progress__bar progress__bar--success" style="width: {{ ($weekMoods->count() / 7) * 100 }}%"></div>
+              <div class="progress__bar progress__bar--success" style="width: {{ ($weekMoodCount / 7) * 100 }}%"></div>
             </div>
           </div>
           <div>
@@ -396,7 +396,136 @@
 
 @section('scripts')
 <script>
+var weeklyChart = null;
+var currentChartType = 'bar';
+
+function getChartColors() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+               (document.documentElement.getAttribute('data-theme') !== 'light' &&
+                window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  return {
+    grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    text: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+    primary: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#3b82f6',
+    surface: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(59,130,246,0.1)',
+  };
+}
+
+function buildWeeklyChart(data) {
+  var colors = getChartColors();
+  var days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  var dayMap = {1:'Mon',2:'Tue',3:'Wed',4:'Thu',5:'Fri',6:'Sat',0:'Sun'};
+  var values = days.map(function() { return null; });
+  var labels = days.map(function() { return ''; });
+
+  var moodOrder = ['very_sad','sad','anxious','stressed','calm','happy','excellent'];
+  var moodLabels = {'very_sad':'Very Sad','sad':'Sad','anxious':'Anxious','stressed':'Stressed','calm':'Calm','happy':'Happy','excellent':'Excellent'};
+  var moodColors = {'very_sad':'#ef4444','sad':'#f97316','anxious':'#eab308','stressed':'#a855f7','calm':'#06b6d4','happy':'#22c55e','excellent':'#3b82f6'};
+  var moodEmojis = {'very_sad':'😢','sad':'😟','anxious':'😰','stressed':'😤','calm':'😌','happy':'😊','excellent':'😄'};
+
+  data.forEach(function(m) {
+    var dow = new Date(m.mood_date).getDay();
+    var idx = dow === 0 ? 6 : dow - 1;
+    values[idx] = m.mood_scale;
+    labels[idx] = moodLabels[m.mood] || m.mood;
+  });
+
+  var pointColors = data.map(function(m) { return moodColors[m.mood] || '#3b82f6'; });
+
+  var canvas = document.getElementById('weeklyMoodChart');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+
+  if (weeklyChart) { weeklyChart.destroy(); }
+
+  var isBar = currentChartType === 'bar';
+  var config = {
+    type: isBar ? 'bar' : 'line',
+    data: {
+      labels: days,
+      datasets: [{
+        label: 'Mood Intensity',
+        data: values,
+        backgroundColor: isBar ? pointColors : colors.primary + '20',
+        borderColor: isBar ? pointColors : colors.primary,
+        borderWidth: isBar ? 1 : 3,
+        borderRadius: isBar ? 6 : 0,
+        barPercentage: 0.6,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: isBar ? 0 : 5,
+        pointHoverRadius: 8,
+        fill: isBar ? false : true,
+        tension: 0.35,
+        spanGaps: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'var(--color-surface)',
+          titleColor: 'var(--color-text)',
+          bodyColor: 'var(--color-text-secondary)',
+          borderColor: 'var(--color-border)',
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(context) {
+              var val = context.parsed.y;
+              return val ? 'Intensity: ' + val + '/10' : 'No entry';
+            },
+            afterLabel: function(context) {
+              var idx = context.dataIndex;
+              return labels[idx] ? labels[idx] : '';
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0,
+          max: 10,
+          ticks: { stepSize: 2, color: colors.text, font: { size: 10 } },
+          grid: { color: colors.grid, drawBorder: false }
+        },
+        x: {
+          ticks: { color: colors.text, font: { size: 10, weight: '600' } },
+          grid: { display: false }
+        }
+      },
+      interaction: { intersect: false, mode: 'index' }
+    }
+  };
+
+  weeklyChart = new Chart(ctx, config);
+}
+
+function toggleChartType() {
+  currentChartType = currentChartType === 'bar' ? 'line' : 'bar';
+  fetchWeeklyData();
+}
+
+function fetchWeeklyData() {
+  fetch('{{ route("moods.weekly") }}', {
+    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) { buildWeeklyChart(data); })
+  .catch(function(e) { console.error('Chart data error:', e); });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+  fetchWeeklyData();
+
+  // Listen for theme changes to redraw chart
+  var observer = new MutationObserver(function() { if (weeklyChart) fetchWeeklyData(); });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
   document.querySelectorAll('.dashboard-mood-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var mood = this.getAttribute('data-mood');
@@ -424,6 +553,7 @@ document.addEventListener('DOMContentLoaded', function () {
           this.innerHTML = '<span style=\"font-size:1.5rem;\">✅</span>';
           var self = this;
           setTimeout(function() { self.innerHTML = orig; }, 1500);
+          fetchWeeklyData();
         }
       }.bind(this)).catch(function() {});
     });

@@ -78,6 +78,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/assessments/{type}/take', [AssessmentController::class, 'show'])->name('assessments.take');
     Route::post('/assessments', [AssessmentController::class, 'store'])->name('assessments.store');
     Route::get('/assessments/{type}/results', [AssessmentController::class, 'results'])->name('assessments.results');
+    Route::get('/assessments/report/{assessmentResult}', [AssessmentController::class, 'report'])->name('assessments.report');
     Route::get('/assessments/history/all', [AssessmentController::class, 'history'])->name('assessments.history');
 
     // Outcomes
@@ -87,6 +88,12 @@ Route::middleware('auth')->group(function () {
     // Patient therapist selection
     Route::get('/my-therapist', [NeuroController::class, 'therapistSelection'])->name('patient.therapist');
     Route::post('/my-therapist/select', [NeuroController::class, 'selectTherapist'])->name('patient.therapist.select');
+
+    // Weekly mood data API
+    Route::get('/api/moods/weekly', [MoodController::class, 'getWeeklyData'])->name('moods.weekly');
+
+    // Export report
+    Route::get('/export/mood-report', [NeuroController::class, 'exportMoodReport'])->name('export.mood-report');
 
     // Crisis Alerts
     Route::get('/crisis-alerts', [CrisisAlertController::class, 'index'])->name('crisis-alerts.index');

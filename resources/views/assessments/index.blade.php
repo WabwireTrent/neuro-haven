@@ -18,8 +18,8 @@
   <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
-@if($latest && $latest->severity === 'severe' || ($latest && $latest->severity === 'critical'))
-  <div class="alert alert-warning">Your last assessment indicates significant symptoms. Please reach out to your therapist.</div>
+@if($latest && in_array($latest->severity, ['severe', 'moderately-severe']))
+  <div class="alert alert-warning">Your last assessment indicates significant symptoms. <a href="{{ route('assessments.report', $latest) }}">View detailed report</a> and share with your therapist.</div>
 @endif
 
 <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));">
@@ -43,9 +43,14 @@
           </span>
         @endif
       </div>
-      <a href="{{ route('assessments.take', 'phq-9') }}" class="btn btn-primary" style="width: 100%;">
-        {{ $results->get('phq-9', collect())->count() ? 'Retake Assessment' : 'Start Assessment' }}
-      </a>
+      <div style="display: flex; gap: 0.5rem;">
+        @if($results->get('phq-9') && $results->get('phq-9')->first())
+          <a href="{{ route('assessments.report', $results->get('phq-9')->first()) }}" class="btn btn-ghost" style="flex: 1;">View Report</a>
+        @endif
+        <a href="{{ route('assessments.take', 'phq-9') }}" class="btn btn-primary" style="flex: 1;">
+          {{ $results->get('phq-9', collect())->count() ? 'Retake' : 'Start Assessment' }}
+        </a>
+      </div>
     </div>
   </div>
 
@@ -69,9 +74,14 @@
           </span>
         @endif
       </div>
-      <a href="{{ route('assessments.take', 'gad-7') }}" class="btn btn-primary" style="width: 100%;">
-        {{ $results->get('gad-7', collect())->count() ? 'Retake Assessment' : 'Start Assessment' }}
-      </a>
+      <div style="display: flex; gap: 0.5rem;">
+        @if($results->get('gad-7') && $results->get('gad-7')->first())
+          <a href="{{ route('assessments.report', $results->get('gad-7')->first()) }}" class="btn btn-ghost" style="flex: 1;">View Report</a>
+        @endif
+        <a href="{{ route('assessments.take', 'gad-7') }}" class="btn btn-primary" style="flex: 1;">
+          {{ $results->get('gad-7', collect())->count() ? 'Retake' : 'Start Assessment' }}
+        </a>
+      </div>
     </div>
   </div>
 </div>

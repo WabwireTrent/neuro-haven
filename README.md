@@ -1,58 +1,165 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Neuro Haven
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Problem & Solution
 
-## About Laravel
+Mental health conditions such as anxiety, depression, PTSD, and stress disorders affect millions of people worldwide, yet access to effective, personalised therapy remains limited. Traditional therapy relies heavily on in-person sessions with a therapist, which can be constrained by cost, availability, stigma, and geographical barriers. Patients often struggle to maintain consistent therapeutic routines between sessions, and therapists lack tools to monitor patient progress in real time.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Neuro Haven** addresses these challenges by providing an integrated mental health therapy platform that combines:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Web-Based Mental Health Management** — Patients and therapists interact through a comprehensive web dashboard featuring psychological assessments (PHQ-9, GAD-7, PCL-5, AUDIT-C, BAI), mood tracking, treatment plans, session scheduling, progress analytics, crisis alerts, and badge-based gamification to encourage engagement.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Virtual Reality Therapeutic Experiences** — The platform bridges to Unity-based VR environments (forest walks, ocean meditation, mountain scenery, guided breathing exercises) rendered on Meta Quest headsets. VR therapy provides immersive, controlled environments proven to reduce anxiety, manage pain, and support exposure therapy — all accessible from the patient's location.
 
-## Learning Laravel
+- **Therapist-Patient Collaboration** — Therapists assign patients, create personalised treatment plans with suggested therapy sessions, monitor assessment scores and mood trends over time, and receive crisis alerts when patients flag urgent distress.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Real-Time Integration** — A Node.js backend bridges the Laravel web application with the Unity VR application, enabling seamless session launching, status monitoring, and data collection from both web and VR modalities.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+The result is a unified platform where therapists can prescribe VR experiences as part of treatment plans, patients can engage in self-guided or therapist-directed VR therapy, and both parties have access to continuous progress data — making mental health care more accessible, engaging, and effective.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## Setup Instructions
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Prerequisites
+
+| Requirement | Version |
+|-------------|---------|
+| PHP | 8.3+ |
+| Composer | Latest |
+| Node.js | 18+ |
+| npm | Latest |
+| SQLite | (bundled with PHP) |
+| Unity | 2022.3+ LTS (for VR features) |
+| Meta Quest | Quest 2 / Quest 3 / Quest Pro (for VR features) |
+
+### Step 1: Clone the Repository
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/WabwireTrent/neuro-haven.git
+cd neuro-haven
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Step 2: Install PHP Dependencies
 
-## Contributing
+```bash
+composer install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Step 3: Install JavaScript Dependencies
 
-## Code of Conduct
+```bash
+npm install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Step 4: Configure Environment
 
-## Security Vulnerabilities
+```bash
+copy .env.example .env
+php artisan key:generate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Edit `.env` and set the following as needed:
 
-## License
+```env
+APP_NAME="Neuro Haven"
+APP_URL=http://localhost:8000
+DB_CONNECTION=sqlite
+BACKEND_URL=http://localhost:3000
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Unity VR settings (optional, for VR features only)
+UNITY_EXECUTABLE_PATH=C:\NeuroHaven\Builds\NeuroHavenVR.exe
+```
+
+### Step 5: Set Up the Database
+
+```bash
+touch database/database.sqlite
+php artisan migrate --force
+```
+
+To seed the database with sample VR assets and test data:
+
+```bash
+php artisan db:seed
+```
+
+### Step 6: Link Storage
+
+```bash
+php artisan storage:link
+```
+
+### Step 7: Build Frontend Assets
+
+```bash
+npm run build
+```
+
+### Step 8: Start the Application
+
+**Terminal 1 — Laravel Server:**
+
+```bash
+php artisan serve --port=8000
+```
+
+**Terminal 2 — Node.js Backend Bridge (required for VR integration):**
+
+```bash
+cd backend
+npm install
+npm start
+```
+
+**Terminal 3 — Vite Dev Server (for development with hot reload):**
+
+```bash
+npm run dev
+```
+
+### Step 9: Access the Application
+
+Open your browser and navigate to:
+
+```
+http://localhost:8000
+```
+
+Register an account or log in to access the dashboard, assessments, mood tracker, VR library, and therapist tools.
+
+### VR Setup (Optional)
+
+If you want to use the VR therapy features with a Meta Quest headset:
+
+1. Open the Unity project in `unity/` with Unity 2022.3+ LTS
+2. Install OpenXR Plugin and XR Interaction Toolkit via Unity Package Manager
+3. Import `NeuroHavenSessionManager.cs` and `VRBridge.cs` into your Unity project
+4. Build the project for Windows (x86_64)
+5. Connect your Meta Quest via USB Link or Air Link
+6. Set `UNITY_EXECUTABLE_PATH` in `.env` to point to the built `.exe`
+
+### Project Structure
+
+```
+neuro-haven/
+├── app/
+│   ├── Http/Controllers/      # Web & API controllers
+│   ├── Models/                # Eloquent models (User, Assessment, VRAsset, etc.)
+│   └── Services/              # Notification & Unity launcher services
+├── backend/
+│   └── server.js              # Node.js bridge server for VR session management
+├── config/                    # Laravel configuration
+├── database/
+│   ├── migrations/            # Database migrations
+│   └── seeders/               # Sample data seeders
+├── resources/
+│   └── views/                 # Blade templates (dashboard, assessments, VR, etc.)
+├── routes/
+│   └── web.php                # Route definitions
+├── scripts/
+│   └── launch-unity.ps1       # PowerShell script to launch Unity builds
+├── unity/
+│   ├── NeuroHavenSessionManager.cs  # Unity session polling & scene switching
+│   └── VRBridge.cs            # Unity CLI argument parsing
+└── tests/                     # PHPUnit tests
+```

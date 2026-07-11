@@ -73,10 +73,40 @@ class NeuroController extends Controller
     public function moodTracker()
     {
         $userId = auth()->id();
-        $todayMood = Mood::forUser($userId)->whereDate('mood_date', today())->latest()->first();
+        $todayMoods = Mood::forUser($userId)->whereDate('mood_date', today())->latest()->get();
         $recentMoods = Mood::forUser($userId)->orderBy('mood_date', 'desc')->limit(30)->get();
 
-        return view('mood-tracker', compact('todayMood', 'recentMoods'));
+        return view('mood-tracker', compact('todayMoods', 'recentMoods'));
+    }
+
+    public function exportMoodReport(Request $request)
+    {
+        $user = auth()->user();
+        $days = min((int) $request->query('days', 90), 365);
+        $since = now()->subDays($days);
+
+        $moods = Mood::forUser($user->id)
+            ->where('mood_date', '>=', $since)
+            ->orderBy('mood_date', 'desc')
+            ->get();
+
+        $avgMood = $moods->avg('mood_scale') ?? 0;
+        $totalEntries = $moods->count();
+        $streak = $this->calculateStreak($user->id);
+        $sessions = VRSession::where('user_id', $user->id)
+            ->whereNotNull('completed_at')
+            ->where('started_at', '>=', $since)
+            ->orderBy('started_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        $periodLabel = $days === 1 ? '24 Hours' : "Last {$days} Days";
+        $html = view('exports.mood-report', compact('user', 'moods', 'avgMood', 'totalEntries', 'streak', 'sessions', 'periodLabel'))->render();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->download('neuro-haven-mood-report-' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function therapySessions()

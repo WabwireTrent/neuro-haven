@@ -56,66 +56,97 @@
     <div class="card" style="margin-bottom: 1.25rem;">
       <div class="card-header">
         <h4 class="card-header__title">Today's Check-in</h4>
-        @if($todayMood)
-          <span class="badge badge--success">Logged</span>
+        @if($todayMoods->count() > 0)
+          <span class="badge badge--success">{{ $todayMoods->count() }} logged</span>
         @endif
       </div>
       <div class="card-body">
-        @if($todayMood)
-          <p class="text-muted" style="margin-bottom: 0.75rem;">You already logged today:</p>
-          <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--color-primary-soft); border-radius: var(--radius-lg);">
-            <span style="font-size: 2rem; line-height: 1;">
-              @php $emojis = ['excellent'=>'😄','happy'=>'😊','calm'=>'😌','anxious'=>'😟','sad'=>'😢','stressed'=>'😰']; @endphp
-              {{ $emojis[$todayMood->mood] ?? '😐' }}
-            </span>
-            <div style="flex: 1;">
-              <p style="font-weight: 700; margin: 0; font-size: 1.1rem;">{{ ucfirst($todayMood->mood) }}</p>
-              <p class="text-muted" style="font-size: 0.85rem; margin: 0.125rem 0 0;">{{ $todayMood->mood_scale }}/10 intensity</p>
-              @if($todayMood->note)
-                <p style="margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--color-text); border-left: 3px solid var(--color-primary); padding-left: 0.75rem;">{{ $todayMood->note }}</p>
-              @endif
-            </div>
+        @if($todayMoods->count() > 0)
+          @php $emojis = ['excellent'=>'😄','happy'=>'😊','calm'=>'😌','anxious'=>'😟','sad'=>'😢','stressed'=>'😰']; @endphp
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem;">
+            @foreach($todayMoods as $mood)
+              <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: var(--color-primary-soft); border-radius: var(--radius-lg);">
+                <span style="font-size: 1.5rem; line-height: 1;">
+                  {{ $emojis[$mood->mood] ?? '😐' }}
+                </span>
+                <div style="flex: 1;">
+                  <p style="font-weight: 600; margin: 0; font-size: 0.95rem;">{{ ucfirst($mood->mood) }}</p>
+                  <p class="text-muted" style="font-size: 0.8rem; margin: 0;">{{ $mood->mood_scale }}/10 intensity &middot; {{ $mood->created_at->format('g:i A') }}</p>
+                  @if($mood->note)
+                    <p style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--color-text); border-left: 2px solid var(--color-primary); padding-left: 0.5rem;">{{ $mood->note }}</p>
+                  @endif
+                </div>
+              </div>
+            @endforeach
           </div>
-        @else
-          <form method="POST" action="{{ route('mood.store') }}" style="display: grid; gap: 1.25rem;">
-            @csrf
-            <div>
-              <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.75rem;">How do you feel today?</label>
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
-                @foreach(['excellent'=>'😄 Excellent','happy'=>'😊 Happy','calm'=>'😌 Calm','anxious'=>'😟 Anxious','sad'=>'😢 Sad','stressed'=>'😰 Stressed'] as $value => $label)
-                  <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 2px solid var(--color-border); border-radius: var(--radius-lg); cursor: pointer; transition: all var(--transition-fast); font-size: 0.85rem; font-weight: 600;">
-                    <input type="radio" name="mood" value="{{ $value }}" required style="cursor: pointer;">
-                    <span>{{ $label }}</span>
-                  </label>
-                @endforeach
-              </div>
-              @error('mood')<p class="field-error">{{ $message }}</p>@enderror
-            </div>
-
-            <div>
-              <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.75rem;">Intensity (1-10)</label>
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <input type="range" id="mood_scale" name="mood_scale" min="1" max="10" value="5" style="flex: 1; accent-color: var(--color-primary);">
-                <span id="scale-display" style="font-weight: 700; min-width: 2rem; font-size: 1.1rem;">5</span>
-              </div>
-              @error('mood_scale')<p class="field-error">{{ $message }}</p>@enderror
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="note">
-                Describe Your Mood
-                <span style="font-weight: 400; color: var(--color-text-muted); font-size: 0.8rem;">(optional — shared with your therapist)</span>
-              </label>
-              <textarea id="note" name="note" class="form-textarea" rows="4" placeholder="What's on your mind? What triggered this mood? How are you really feeling? Your therapist will be able to read this to better understand your journey."></textarea>
-            </div>
-            <button class="btn btn-primary" type="submit" style="width: fit-content;">Save Mood</button>
-          </form>
         @endif
+
+        <form method="POST" action="{{ route('mood.store') }}" style="display: grid; gap: 1.25rem;">
+          @csrf
+          <div>
+            <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.75rem;">How do you feel right now?</label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+              @foreach(['excellent'=>'😄 Excellent','happy'=>'😊 Happy','calm'=>'😌 Calm','anxious'=>'😟 Anxious','sad'=>'😢 Sad','stressed'=>'😰 Stressed'] as $value => $label)
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 2px solid var(--color-border); border-radius: var(--radius-lg); cursor: pointer; transition: all var(--transition-fast); font-size: 0.85rem; font-weight: 600;">
+                  <input type="radio" name="mood" value="{{ $value }}" required style="cursor: pointer;">
+                  <span>{{ $label }}</span>
+                </label>
+              @endforeach
+            </div>
+            @error('mood')<p class="field-error">{{ $message }}</p>@enderror
+          </div>
+
+          <div>
+            <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.75rem;">Intensity (1-10)</label>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <input type="range" id="mood_scale" name="mood_scale" min="1" max="10" value="5" style="flex: 1; accent-color: var(--color-primary);">
+              <span id="scale-display" style="font-weight: 700; min-width: 2rem; font-size: 1.1rem;">5</span>
+            </div>
+            @error('mood_scale')<p class="field-error">{{ $message }}</p>@enderror
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="note">
+              Describe Your Mood
+              <span style="font-weight: 400; color: var(--color-text-muted); font-size: 0.8rem;">(optional — shared with your therapist)</span>
+            </label>
+            <textarea id="note" name="note" class="form-textarea" rows="4" placeholder="What's on your mind? What triggered this mood? How are you really feeling? Your therapist will be able to read this to better understand your journey."></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit" style="width: fit-content;">Save Mood</button>
+        </form>
       </div>
     </div>
   </div>
 
   <div>
+    {{-- Mood Trend Chart --}}
+    <div class="card" style="margin-bottom: 1.25rem;">
+      <div class="card-header">
+        <h4 class="card-header__title">Mood Trend</h4>
+        <div class="card-header__action" style="display:flex;gap:0.5rem;align-items:center;">
+          <button onclick="toggleTrendChart()" class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:0.25rem 0.5rem;" title="Toggle chart type">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </button>
+          <form action="{{ route('export.mood-report') }}" method="GET" style="display:inline-flex;gap:0.15rem;align-items:center;">
+            <select name="days" style="font-size:0.65rem;padding:0.15rem 0.3rem;width:auto;border:1px solid #d1d5db;border-radius:4px;background:#fff;">
+              <option value="7">7d</option>
+              <option value="30">30d</option>
+              <option value="90" selected>90d</option>
+              <option value="365">1y</option>
+            </select>
+            <button type="submit" class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:0.25rem 0.5rem;display:inline-flex;align-items:center;gap:0.15rem;" title="Export PDF">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-container" style="height: 200px; position: relative;">
+          <canvas id="moodTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
     {{-- Recent Entries --}}
     @if($recentMoods->count() > 0)
       <div class="card">
@@ -160,6 +191,116 @@
 <script>
 document.getElementById('mood_scale')?.addEventListener('input', function() {
   document.getElementById('scale-display').textContent = this.value;
+});
+
+var trendChart = null;
+var trendChartType = 'line';
+
+function getChartColors() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+               (document.documentElement.getAttribute('data-theme') !== 'light' &&
+                window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  return {
+    grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    text: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+    primary: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#3b82f6',
+  };
+}
+
+function buildTrendChart(data) {
+  var colors = getChartColors();
+  var moodEmojis = {'excellent':'😄','happy':'😊','calm':'😌','anxious':'😟','sad':'😢','stressed':'😰','very_sad':'😢'};
+
+  var labels = data.map(function(m) { return new Date(m.mood_date).toLocaleDateString('en', { month:'short', day:'numeric' }); });
+  var values = data.map(function(m) { return m.mood_scale; });
+  var pointColors = data.map(function(m) {
+    if (m.mood_scale <= 3) return '#ef4444';
+    if (m.mood_scale <= 6) return '#eab308';
+    return '#22c55e';
+  });
+
+  var canvas = document.getElementById('moodTrendChart');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+
+  if (trendChart) { trendChart.destroy(); }
+
+  var isLine = trendChartType === 'line';
+
+  trendChart = new Chart(ctx, {
+    type: isLine ? 'line' : 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Mood Intensity',
+        data: values,
+        backgroundColor: isLine ? colors.primary + '15' : pointColors,
+        borderColor: colors.primary,
+        borderWidth: isLine ? 2 : 1,
+        borderRadius: isLine ? 0 : 4,
+        barPercentage: 0.5,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: isLine ? 4 : 0,
+        pointHoverRadius: 7,
+        fill: isLine ? true : false,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'var(--color-surface)',
+          titleColor: 'var(--color-text)',
+          bodyColor: 'var(--color-text-secondary)',
+          borderColor: 'var(--color-border)',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 6,
+          callbacks: {
+            afterLabel: function(context) {
+              var idx = context.dataIndex;
+              var mood = data[idx];
+              if (!mood) return '';
+              return (moodEmojis[mood.mood] || '') + ' ' + (mood.mood.charAt(0).toUpperCase() + mood.mood.slice(1));
+            }
+          }
+        }
+      },
+      scales: {
+        y: { min: 0, max: 10, ticks: { stepSize: 2, color: colors.text, font: { size: 9 } }, grid: { color: colors.grid, drawBorder: false } },
+        x: { ticks: { color: colors.text, font: { size: 8, weight: '600' }, maxRotation: 45 }, grid: { display: false } }
+      },
+      interaction: { intersect: false, mode: 'index' }
+    }
+  });
+}
+
+function toggleTrendChart() {
+  trendChartType = trendChartType === 'line' ? 'bar' : 'line';
+  fetchTrendData();
+}
+
+function fetchTrendData() {
+  var csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  fetch('{{ route("moods.weekly") }}', {
+    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) { buildTrendChart(data); })
+  .catch(function(e) { console.error('Trend data error:', e); });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  if (document.getElementById('moodTrendChart')) {
+    fetchTrendData();
+    var observer = new MutationObserver(function() { if (trendChart) fetchTrendData(); });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }
 });
 </script>
 @endsection
